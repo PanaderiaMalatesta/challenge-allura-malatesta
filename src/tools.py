@@ -12,6 +12,7 @@ automaticamente sin tocar ningun otro archivo.
 from __future__ import annotations
 
 import datetime as _dt
+import difflib
 import re
 from pathlib import Path
 
@@ -53,9 +54,40 @@ def _normalizar(texto: str) -> str:
 
 
 def _legible(texto: str) -> str:
-    """Convierte identificadores en CamelCase (ej. 'MurbeNuez') a texto separado
-    por espacios (ej. 'Murbe Nuez') solo para mostrarlo al usuario."""
-    return re.sub(r"(?<!^)(?=[A-Z])", " ", texto)
+    """Convierte identificadores en CamelCase o con guion bajo (ej. 'MurbeNuez',
+    'MasaQuebrada_Base') a texto separado por espacios, solo para mostrarlo al
+    usuario."""
+    texto = texto.replace("_", " ")
+    texto = re.sub(r"(?<!^)(?=[A-Z])", " ", texto)
+    return re.sub(r"\s+", " ", texto).strip()
+
+
+def _buscar_filas(catalogo: pd.DataFrame, texto: str) -> pd.DataFrame:
+    """Filas cuyo producto+variante+categoria contienen TODAS las palabras de
+    `texto` (sin importar mayusculas/espaciado/orden). Tolera que el llamador no
+    separe bien producto y variante (ej. pasar "Masa Quebrada Sablee" entero)."""
+    palabras = [p for p in re.split(r"\s+", texto.strip().lower()) if p]
+
+    def _coincide(fila) -> bool:
+        campo = _normalizar(f"{fila.producto} {fila.variante} {fila.categoria}")
+        return all(_normalizar(palabra) in campo for palabra in palabras)
+
+    return catalogo[catalogo.apply(_coincide, axis=1)]
+
+
+def _alternativas_fuzzy(catalogo: pd.DataFrame, texto: str, minimo: float = 0.35, tope: int = 5) -> list:
+    """Filas mas parecidas a `texto` por similitud de texto, para cuando la
+    busqueda por palabras no encuentra nada (ej. errores de tipeo)."""
+    texto_norm = _normalizar(texto)
+    puntajes = [
+        (
+            difflib.SequenceMatcher(None, texto_norm, _normalizar(f"{fila.producto} {fila.variante}")).ratio(),
+            fila,
+        )
+        for fila in catalogo.itertuples()
+    ]
+    puntajes.sort(key=lambda par: par[0], reverse=True)
+    return [fila for puntaje, fila in puntajes[:tope] if puntaje > minimo]
 
 
 def _read_csv_flexible(path: Path) -> pd.DataFrame:
@@ -114,7 +146,14 @@ def _info_catalogo(producto: str, variante: str) -> pd.Series | None:
         (catalogo["producto"].apply(_normalizar) == _normalizar(producto))
         & (catalogo["variante"].apply(_normalizar) == _normalizar(variante))
     ]
-    return None if fila.empty else fila.iloc[0]
+    if not fila.empty:
+        return fila.iloc[0]
+
+    # Coincidencia exacta fallo (ej. el LLM no separo bien producto/variante,
+    # como pasar "Masa Quebrada Sablee" completo en el campo producto). Probar
+    # de nuevo buscando todas las palabras de ambos campos en conjunto.
+    filas = _buscar_filas(catalogo, f"{producto} {variante}")
+    return filas.iloc[0] if len(filas) == 1 else None
 
 
 def costo_unitario_producto(producto: str, variante: str) -> float:
@@ -166,23 +205,31 @@ def listar_variantes(termino: str) -> str:
     variante especifica quiere, en vez de mostrar todo el detalle de costeo de
     una vez."""
     catalogo = _load_catalogo()
-    palabras = [p for p in re.split(r"\s+", termino.strip().lower()) if p]
+    filas = _buscar_filas(catalogo, termino)
+    if not filas.empty:
+        return "\n".join(f"- {_legible(fila.producto)} {_legible(fila.variante)}" for fila in filas.itertuples())
 
-    def _coincide(fila) -> bool:
-        texto = _normalizar(f"{fila.producto} {fila.variante} {fila.categoria}")
-        return all(_normalizar(palabra) in texto for palabra in palabras)
-
-    filas = catalogo[catalogo.apply(_coincide, axis=1)]
-    if filas.empty:
-        return f"No encontré nada que coincida con '{termino}'."
-    return "\n".join(f"- {_legible(fila.producto)} {_legible(fila.variante)}" for fila in filas.itertuples())
+    # Sin coincidencia exacta/por palabra (ej. errores de tipeo): buscar las
+    # alternativas mas parecidas por similitud de texto en vez de fallar.
+    mejores = _alternativas_fuzzy(catalogo, termino)
+    if not mejores:
+        return f"No encontré nada que se parezca a '{termino}'."
+    lineas = [f"No encontré una coincidencia exacta con '{termino}'. ¿Quisiste decir alguna de estas?"]
+    lineas += [f"- {_legible(fila.producto)} {_legible(fila.variante)}" for fila in mejores]
+    return "\n".join(lineas)
 
 
 def buscar_receta(producto: str) -> str:
-    """Devuelve el desglose de componentes y costo unitario de un producto (todas sus variantes)."""
+    """Devuelve el desglose de componentes y costo unitario de un producto (todas sus
+    variantes que coincidan). Acepta texto descriptivo libre (ej. 'masa quebrada
+    sablee', 'medialuna'), no hace falta el nombre exacto del producto."""
     catalogo = _load_catalogo()
-    filas = catalogo[catalogo["producto"].apply(_normalizar) == _normalizar(producto)]
+    filas = _buscar_filas(catalogo, producto)
     if filas.empty:
+        mejores = _alternativas_fuzzy(catalogo, producto)
+        if mejores:
+            opciones = ", ".join(f"{_legible(f.producto)} {_legible(f.variante)}" for f in mejores)
+            return f"No encontré '{producto}' exacto. ¿Quisiste decir alguna de estas?: {opciones}"
         disponibles = sorted(catalogo["producto"].unique())
         return f"No encontré '{producto}' en el catálogo. Productos disponibles: {', '.join(disponibles)}."
 
@@ -192,7 +239,7 @@ def buscar_receta(producto: str) -> str:
             costo_unitario = float(fila.costo_fijo)
             detalle = "costo fijo (sin desglose de insumos)"
         else:
-            componentes = _costeo_por_componente(producto, fila.variante)
+            componentes = _costeo_por_componente(fila.producto, fila.variante)
             costo_unitario = sum(componentes.values())
             detalle = ", ".join(f"{c}: ${v:.0f}" for c, v in componentes.items())
         tiene_precio = pd.notna(fila.precio_venta)
@@ -200,7 +247,7 @@ def buscar_receta(producto: str) -> str:
         fc_txt = f"{food_cost:.1f}%" if food_cost is not None else "s/precio"
         precio_txt = f"${fila.precio_venta:.0f}" if tiene_precio else "sin precio definido"
         lineas.append(
-            f"- {_legible(producto)} {_legible(fila.variante)} [{_legible(fila.categoria)}]: "
+            f"- {_legible(fila.producto)} {_legible(fila.variante)} [{_legible(fila.categoria)}]: "
             f"costo unitario ${costo_unitario:.0f} ({detalle}) | precio venta {precio_txt} | food cost {fc_txt}"
         )
     return "\n".join(lineas)
@@ -216,11 +263,17 @@ def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_obje
     info = _info_catalogo(producto, variante)
     if info is None:
         catalogo = _load_catalogo()
-        disponibles = catalogo[catalogo["producto"].apply(_normalizar) == _normalizar(producto)]["variante"].unique()
-        if len(disponibles) == 0:
-            return f"No encontré el producto '{producto}'."
-        return f"No encontré la variante '{variante}' de {producto}. Variantes disponibles: {', '.join(disponibles)}."
+        candidatas = _buscar_filas(catalogo, f"{producto} {variante}")
+        if len(candidatas) > 1:
+            opciones = ", ".join(f"{_legible(f.producto)} {_legible(f.variante)}" for f in candidatas.itertuples())
+            return f"Encontré varias coincidencias para '{producto} {variante}', ¿cuál de estas es?: {opciones}"
+        mejores = _alternativas_fuzzy(catalogo, f"{producto} {variante}")
+        if mejores:
+            opciones = ", ".join(f"{_legible(f.producto)} {_legible(f.variante)}" for f in mejores)
+            return f"No encontré '{producto} {variante}' exacto. ¿Quisiste decir alguna de estas?: {opciones}"
+        return f"No encontré el producto '{producto}' {variante}."
 
+    producto, variante = info["producto"], info["variante"]
     costo_unitario = costo_unitario_producto(producto, variante)
     precio_unitario_actual = info["precio_venta"]
     tiene_precio = pd.notna(precio_unitario_actual)
@@ -272,6 +325,7 @@ def registrar_produccion(fecha: str, producto: str, variante: str, cantidad: flo
     info = _info_catalogo(producto, variante)
     if info is None:
         return f"No encontré la receta de {producto} {variante}, no se registró producción."
+    producto, variante = info["producto"], info["variante"]
     if pd.isna(info["precio_venta"]):
         return f"{producto} {variante} todavía no tiene precio de venta definido, no se puede registrar producción."
 
