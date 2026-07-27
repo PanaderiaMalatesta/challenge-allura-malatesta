@@ -180,6 +180,92 @@ Ingredientes por galleta: harina 0000 9,88 g, cacao en polvo 0,54 g, azúcar
 Procedimiento: igual que la Sucrée, agregando el cacao junto con la harina →
 tras el reposo, dar forma a las galletas → hornear a 150°C por ~12 min.
 
+## Galletas (categoría base, recetario interno en ampliación — teoría, recetas pendientes)
+
+Base técnica para toda la línea de galletas. Aún no hay recetas con gramajes
+cargadas en esta categoría — esto es el conocimiento de por qué funciona cada
+ingrediente, para cuando se agreguen recetas específicas.
+
+### Harina
+Se usa harina floja o de todo uso (10-11% proteína) — genera poco gluten, da
+estructura suficiente para una galleta gruesa que no se expande demasiado. La
+harina aporta también el almidón que gelatiniza durante el horneado, dando
+firmeza a la galleta cocida. Sustituto sin gluten (si se necesita): 70%
+almidón de maíz + 20% harina de arroz + 10% almidón de tapioca + 0,3% goma
+xantana (imita la función del gluten; no omitir la goma xantana).
+
+### Materia grasa — por qué mantequilla y no margarina
+La mantequilla real (solo crema de leche, 80-82% grasa, 14-16% agua, punto de
+fusión 28-29°C) aporta sabor, aroma, humedad, y actúa como ablandador
+recubriendo la harina (limita el desarrollo de gluten → galleta crujiente
+por fuera, tierna por dentro). También dispara la reacción de Maillard
+(proteínas + azúcares de la mantequilla → color/sabor/aroma tostado).
+Margarinas y mantecas vegetales tienen más agua (alteran el balance de la
+receta) y un punto de fusión más alto (40-42°C) — producen galletas más
+duras, pálidas, con sensación grasosa en boca y sin el aroma a tostado.
+Sustituto vegano: 82% aceite de coco refinado + 18% agua + 1% lecitina de
+soya/girasol (imita el % de agua y la función emulsionante de la
+mantequilla).
+
+### Líquidos acuosos y huevo
+El agua es esencial para hidratar la harina, formar gluten y gelatinizar el
+almidón — no se puede alterar el contenido de agua de una receta sin ajustar
+el resto. El huevo aporta emulsión, hidratación, función ligante y (en menor
+medida que en otras masas) estructura. Composición aproximada del huevo: 74%
+agua, 10% grasa, 16% proteína. Sustituto de 100 g de huevo: 74 g de agua +
+10 g de aceite + 16 g de harina + 1% de lecitina de soya/girasol (o
+reemplazar el agua por un puré de fruta con equivalente % de agua, restando
+del azúcar/harina de la receta lo que aporte ese puré).
+
+### Azúcar
+Además de endulzar, retiene humedad (higroscopía — retrasa el desarrollo de
+gluten y compite por el agua con el almidón, dando una textura más suave) y
+se carameliza en el horno aportando aroma/sabor/color. Sin azúcar, la galleta
+sale con textura de pan (mucho gluten, miga elástica y seca). El azúcar
+moreno (con melaza) es más higroscópico → galletas más húmedas, sabor a
+melaza.
+
+### Leudantes químicos
+Bicarbonato de sodio y/o polvo de hornear (doble acción: reaccionan al
+mezclarse y de nuevo con el calor del horno). Deben pesarse con balanza de
+precisión menor a 1 g — un exceso hace la galleta demasiado esponjosa
+(no deseado en galletas).
+
+### Saborizantes y toppings
+Vainilla, especias, cacao, ralladura de cítricos, sal: aportan sabor/aroma,
+no son estructurales. Si son en polvo, se resta un poco de harina de la
+receta para compensar (absorben humedad). Los toppings (chips de chocolate,
+frutos secos) se agregan AL FINAL, después de que la masa está lista —
+si se agregan antes, la batidora los tritura y altera la composición de la
+masa. No tienen función estructural, se puede ajustar su cantidad libremente.
+
+### Procedimiento general (orden de una receta de galletas)
+1. **Cremado:** mantequilla + azúcar en batidora (accesorio pala/lira), ~6
+   min a velocidad alta, hasta lograr una mezcla aireada y cremosa. No exceder
+   el tiempo (exceso de aire = textura indeseada).
+2. **Emulsión:** agregar huevos de forma gradual (y vainilla, si la receta la
+   lleva) hasta que la mezcla esté homogénea, aireada, y se despegue del
+   bowl.
+3. **Secos:** tamizar harina + polvos de hornear/bicarbonato + cacao (si
+   aplica) para evitar grumos y contaminantes. Incorporar a velocidad mínima
+   solo hasta homogeneizar (segundos) — no sobremezclar.
+4. **Toppings:** incorporar al final, distribuir uniformemente.
+5. **Formado:** porcionar según el peso de la receta, bolear. Se puede
+   congelar la masa cruda hasta 3 meses, u hornear directo.
+6. **Horneado:** ~180°C (varía según receta y horno — usar termómetro interno,
+   la temperatura del panel del horno rara vez coincide con la real). Dejar
+   espacio entre galletas para que circule el calor.
+
+### Qué pasa dentro del horno (ciencia del horneado)
+- 28-33°C: la mantequilla se derrite, la masa se expande, el gluten deja
+  escapar gas formando las grietas típicas de la superficie.
+- 62°C: las proteínas del huevo coagulan, aportando estructura.
+- 60-70°C: gelatinización del almidón (absorbe agua, da firmeza).
+- ~130-154°C: reacción de Maillard visible (color/aroma tostado) y
+  caramelización del azúcar (intensifica color/aroma/sabor).
+- Al enfriar, la grasa vuelve a solidificarse y el almidón termina de dar
+  firmeza — ahí la galleta está lista para despegar de la lata.
+
 ## Notas de food cost objetivo por categoría (benchmark del negocio)
 - Facturas: objetivo <20% (rango sano boutique 25-35%, facturas están debajo por ser el producto ancla)
 - Medialunas Clásicas: objetivo <30%
