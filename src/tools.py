@@ -12,6 +12,7 @@ automaticamente sin tocar ningun otro archivo.
 from __future__ import annotations
 
 import datetime as _dt
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -49,6 +50,12 @@ def _normalizar(texto: str) -> str:
     """Minusculas y sin espacios/guiones bajos, para poder comparar 'masa quebrada'
     contra 'MasaQuebrada_Base' sin que el espaciado o el casing importen."""
     return texto.lower().replace(" ", "").replace("_", "")
+
+
+def _legible(texto: str) -> str:
+    """Convierte identificadores en CamelCase (ej. 'MurbeNuez') a texto separado
+    por espacios (ej. 'Murbe Nuez') solo para mostrarlo al usuario."""
+    return re.sub(r"(?<!^)(?=[A-Z])", " ", texto)
 
 
 def _read_csv_flexible(path: Path) -> pd.DataFrame:
@@ -165,7 +172,7 @@ def listar_variantes(termino: str) -> str:
     filas = catalogo[mask]
     if filas.empty:
         return f"No encontré nada que coincida con '{termino}'."
-    return "\n".join(f"- {fila.producto} {fila.variante}" for fila in filas.itertuples())
+    return "\n".join(f"- {_legible(fila.producto)} {_legible(fila.variante)}" for fila in filas.itertuples())
 
 
 def buscar_receta(producto: str) -> str:
@@ -190,8 +197,8 @@ def buscar_receta(producto: str) -> str:
         fc_txt = f"{food_cost:.1f}%" if food_cost is not None else "s/precio"
         precio_txt = f"${fila.precio_venta:.0f}" if tiene_precio else "sin precio definido"
         lineas.append(
-            f"- {producto} {fila.variante} [{fila.categoria}]: costo unitario ${costo_unitario:.0f} "
-            f"({detalle}) | precio venta {precio_txt} | food cost {fc_txt}"
+            f"- {_legible(producto)} {_legible(fila.variante)} [{_legible(fila.categoria)}]: "
+            f"costo unitario ${costo_unitario:.0f} ({detalle}) | precio venta {precio_txt} | food cost {fc_txt}"
         )
     return "\n".join(lineas)
 
@@ -219,7 +226,7 @@ def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_obje
     costo_total = costo_unitario * cantidad
 
     resultado = [
-        f"{producto} {variante} x{cantidad:g} unidades:",
+        f"{_legible(producto)} {_legible(variante)} x{cantidad:g} unidades:",
         f"  Costo unitario: ${costo_unitario:.0f} -> Costo total: ${costo_total:.0f}",
     ]
 
