@@ -29,14 +29,24 @@ BENCHMARK_FOOD_COST = {
 }
 
 
+def _read_csv_flexible(path: Path) -> pd.DataFrame:
+    """Lee un CSV detectando automaticamente si el delimitador es ',' o ';'.
+
+    Excel en configuracion regional de Chile guarda "CSV separado por comas"
+    usando ';' como delimitador real, asi que hay que tolerar ambos casos
+    para que editar los datos en Excel no rompa la lectura.
+    """
+    return pd.read_csv(path, sep=None, engine="python")
+
+
 def _load_costeo() -> pd.DataFrame:
-    df = pd.read_csv(COSTEO_PATH)
+    df = _read_csv_flexible(COSTEO_PATH)
     df["costo_unitario"] = df[COMPONENTES].sum(axis=1)
     return df
 
 
 def _load_produccion() -> pd.DataFrame:
-    return pd.read_csv(PRODUCCION_PATH)
+    return _read_csv_flexible(PRODUCCION_PATH)
 
 
 def _fila_producto(costeo: pd.DataFrame, producto: str) -> pd.DataFrame:
