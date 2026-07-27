@@ -160,16 +160,19 @@ def actualizar_precio_insumo(insumo: str, nuevo_precio: float) -> str:
 
 def listar_variantes(termino: str) -> str:
     """Lista los nombres de producto/variante que coincidan con `termino` (busca en
-    producto y categoria, sin distinguir mayusculas ni espaciado). Uso pensado
-    para cuando el usuario pide algo de forma generica (ej. "una receta de masa
-    quebrada") y hay que preguntarle cual variante especifica quiere, en vez de
-    mostrar todo el detalle de costeo de una vez."""
+    producto, variante y categoria, sin distinguir mayusculas ni espaciado, palabra
+    por palabra). Uso pensado para cuando el usuario pide algo de forma generica
+    (ej. "una receta de masa quebrada" o "masa sablee") y hay que preguntarle cual
+    variante especifica quiere, en vez de mostrar todo el detalle de costeo de
+    una vez."""
     catalogo = _load_catalogo()
-    termino_norm = _normalizar(termino)
-    mask = catalogo["producto"].apply(_normalizar).str.contains(termino_norm) | catalogo["categoria"].apply(
-        _normalizar
-    ).str.contains(termino_norm)
-    filas = catalogo[mask]
+    palabras = [p for p in re.split(r"\s+", termino.strip().lower()) if p]
+
+    def _coincide(fila) -> bool:
+        texto = _normalizar(f"{fila.producto} {fila.variante} {fila.categoria}")
+        return all(_normalizar(palabra) in texto for palabra in palabras)
+
+    filas = catalogo[catalogo.apply(_coincide, axis=1)]
     if filas.empty:
         return f"No encontré nada que coincida con '{termino}'."
     return "\n".join(f"- {_legible(fila.producto)} {_legible(fila.variante)}" for fila in filas.itertuples())
