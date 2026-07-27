@@ -39,6 +39,12 @@ Tu trabajo:
    falta tocar nada más.
 
 Reglas importantes:
+- Si el usuario pide una receta o costo de forma GENÉRICA por categoría o
+  producto, sin indicar cuál variante específica (ej. "dame una receta de masa
+  quebrada", "cuánto cuesta una medialuna"), NO muestres todas las variantes
+  con su detalle de costeo de una vez. En su lugar, usa
+  herramienta_listar_variantes para ver las opciones y pregúntale al usuario
+  cuál de esas quiere conocer.
 - NUNCA inventes ni calcules cifras de memoria. Todo número de costo, precio o
   food cost debe salir de las herramientas (escalar_receta, buscar_receta,
   registrar_produccion, costo_diario). Si una herramienta no tiene el dato,
@@ -63,6 +69,15 @@ def herramienta_actualizar_precio_insumo(insumo: str, nuevo_precio: float) -> st
     """Actualiza el precio de una materia prima (ej. 'harina_0000', 'mantequilla').
     Todos los productos que usan ese insumo quedan recosteados automáticamente."""
     return t.actualizar_precio_insumo(insumo, nuevo_precio)
+
+
+@tool
+def herramienta_listar_variantes(termino: str) -> str:
+    """Lista los nombres de producto/variante que coincidan con un termino de
+    busqueda (categoria o producto), sin el detalle de costeo. Usar cuando el
+    usuario pide algo de forma generica por categoria (ej. 'una receta de masa
+    quebrada') y hay que preguntarle cual variante especifica quiere."""
+    return t.listar_variantes(termino)
 
 
 @tool
@@ -102,6 +117,7 @@ def herramienta_buscar_en_recetario(pregunta: str) -> str:
 
 
 TOOLS = [
+    herramienta_listar_variantes,
     herramienta_listar_precios_insumos,
     herramienta_actualizar_precio_insumo,
     herramienta_buscar_receta,

@@ -145,6 +145,22 @@ def actualizar_precio_insumo(insumo: str, nuevo_precio: float) -> str:
     return f"Precio de {nombre_real} actualizado: ${precio_anterior:.0f} -> ${nuevo_precio:.0f}."
 
 
+def listar_variantes(termino: str) -> str:
+    """Lista los nombres de producto/variante que coincidan con `termino` (busca en
+    producto y categoria, sin distinguir mayusculas). Uso pensado para cuando el
+    usuario pide algo de forma generica (ej. "una receta de masa quebrada") y hay
+    que preguntarle cual variante especifica quiere, en vez de mostrar todo el
+    detalle de costeo de una vez."""
+    catalogo = _load_catalogo()
+    mask = catalogo["producto"].str.contains(termino, case=False) | catalogo["categoria"].str.contains(
+        termino, case=False
+    )
+    filas = catalogo[mask]
+    if filas.empty:
+        return f"No encontré nada que coincida con '{termino}'."
+    return "\n".join(f"- {fila.producto} {fila.variante}" for fila in filas.itertuples())
+
+
 def buscar_receta(producto: str) -> str:
     """Devuelve el desglose de componentes y costo unitario de un producto (todas sus variantes)."""
     catalogo = _load_catalogo()
