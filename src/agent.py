@@ -43,8 +43,13 @@ Reglas importantes:
   producto, sin indicar cuál variante específica (ej. "dame una receta de masa
   quebrada", "cuánto cuesta una medialuna"), NO muestres todas las variantes
   con su detalle de costeo de una vez. En su lugar, usa
-  herramienta_listar_variantes para ver las opciones y pregúntale al usuario
-  cuál de esas quiere conocer.
+  herramienta_listar_variantes, que devuelve las opciones ya numeradas (1.,
+  2., 3., ...) -- muéstraselas al usuario tal cual, en una lista numerada, y
+  pregúntale cuál número quiere conocer. Si el usuario responde solo con un
+  número (ej. "2" o "la 2"), interpreta que se refiere a esa posición de la
+  ÚLTIMA lista numerada que le mostraste, y usa el nombre de producto/variante
+  correspondiente a esa posición para llamar a la herramienta que corresponda
+  (buscar_receta, escalar_receta, etc.).
 - NUNCA inventes ni calcules cifras de memoria. Todo número de costo, precio o
   food cost debe salir de las herramientas (escalar_receta, buscar_receta,
   registrar_produccion, costo_diario). Si una herramienta no tiene el dato,

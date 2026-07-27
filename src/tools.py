@@ -207,7 +207,10 @@ def listar_variantes(termino: str) -> str:
     catalogo = _load_catalogo()
     filas = _buscar_filas(catalogo, termino)
     if not filas.empty:
-        return "\n".join(f"- {_legible(fila.producto)} {_legible(fila.variante)}" for fila in filas.itertuples())
+        return "\n".join(
+            f"{i}. {_legible(fila.producto)} {_legible(fila.variante)}"
+            for i, fila in enumerate(filas.itertuples(), start=1)
+        )
 
     # Sin coincidencia exacta/por palabra (ej. errores de tipeo): buscar las
     # alternativas mas parecidas por similitud de texto en vez de fallar.
@@ -215,7 +218,7 @@ def listar_variantes(termino: str) -> str:
     if not mejores:
         return f"No encontré nada que se parezca a '{termino}'."
     lineas = [f"No encontré una coincidencia exacta con '{termino}'. ¿Quisiste decir alguna de estas?"]
-    lineas += [f"- {_legible(fila.producto)} {_legible(fila.variante)}" for fila in mejores]
+    lineas += [f"{i}. {_legible(fila.producto)} {_legible(fila.variante)}" for i, fila in enumerate(mejores, start=1)]
     return "\n".join(lineas)
 
 
