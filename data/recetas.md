@@ -266,6 +266,138 @@ masa. No tienen función estructural, se puede ajustar su cantidad libremente.
 - Al enfriar, la grasa vuelve a solidificarse y el almidón termina de dar
   firmeza — ahí la galleta está lista para despegar de la lata.
 
+### Cookie Clásica de Chips de Chocolate — rinde 10 cookies (1.548,7 g)
+Ingredientes: mantequilla a temperatura ambiente 276 g, azúcar morena 242 g,
+azúcar 109 g, huevos 133 g, harina floja 570 g, sal 4,7 g, maicena 4 g,
+bicarbonato 4 g, chocolate negro 70% picado 206 g.
+Procedimiento: cremar mantequilla + ambos azúcares 5-7 min a velocidad alta →
+incorporar huevos poco a poco hasta homogeneizar → bajar a mínimo, agregar
+secos tamizados + chocolate picado, mezclar hasta masa homogénea → porcionar
+esferas de 150 g → congelar mínimo 3 h → hornear a 200°C ~10 min (bordes
+dorados, centro aún húmedo) → retirar, redondear con cortador circular →
+enfriar completamente antes de desmoldar.
+
+### Cookie Red Velvet — rinde 10 cookies
+**Insert de queso crema** (221 g): queso crema tipo Philadelphia 176 g,
+azúcar 40 g, pasta de vainilla 5 g. Cremar todo → verter en molde semiesfera
+de 4 cm → congelar mínimo 4 h (se conserva congelado hasta 3 meses).
+**Masa cookie** (1.350,8 g): mantequilla 241 g, azúcar 275 g, huevos 116 g,
+harina floja 516 g, cacao en polvo 12 g, sal 3,6 g, maicena 3,6 g, polvos de
+hornear 3,6 g, chips de chocolate blanco 180 g, colorante rojo hidrosoluble
+c/n.
+Procedimiento: cremar mantequilla + azúcar 6-7 min → incorporar huevos
+gradualmente hasta emulsionar → bajar a mínimo, agregar secos tamizados +
+chips → porcionar esferas de 130 g, insertar el relleno de queso crema
+congelado dentro → congelar mínimo 3 h → hornear a 180°C ~12 min → redondear
+con cortador, decorar con chips a gusto → enfriar antes de desmoldar.
+
+### Mini Galletas de Avellanas y Chocolate — rinde 30 unidades (801 g)
+Ingredientes: mantequilla 117 g, azúcar moreno 53 g, azúcar 89 g, glucosa
+37 g, pasta de avellanas 30 g, huevos 55 g, harina floja 214 g, polvos de
+hornear 3 g, bicarbonato 2 g, sal 3 g, avellanas tostadas picadas 99 g,
+chocolate negro 56% picado 99 g.
+Procedimiento: cremar mantequilla + ambos azúcares + glucosa + pasta de
+avellanas ~5 min velocidad media → agregar huevo, subir a alta hasta
+emulsionar → bajar a mínimo, agregar secos tamizados + chocolate + avellanas
+picadas → porcionar esferas de 25 g → congelar mínimo 3 h → hornear a 180°C
+7-8 min → decorar recién horneadas con avellanas partidas y praliné →
+enfriar antes de desmoldar.
+
+### Mini Galleta de Cacao — rinde 30 unidades (801 g)
+Ingredientes: mantequilla 127 g, azúcar moreno 119 g, azúcar 71 g, huevos
+67 g, harina floja 246 g, cacao en polvo 24 g, maicena 2 g, bicarbonato 2 g,
+sal 2 g, chocolate negro 56% picado 141 g.
+Procedimiento: cremar mantequilla + ambos azúcares 5-6 min velocidad media →
+agregar huevo hasta homogeneizar → bajar a mínimo, agregar secos tamizados +
+chocolate → porcionar esferas de 25 g → congelar mínimo 3 h → hornear a
+180°C 7-8 min → decorar con chips recién horneadas → enfriar antes de
+desmoldar.
+
+### Mini Galleta de Pistacho y Limón — rinde 30 unidades (799,6 g)
+Ingredientes: mantequilla 111 g, azúcar moreno 29 g, azúcar 103 g, glucosa
+34 g, pasta de pistachos 34 g, zeste de limón 3 g, huevos 55 g, harina floja
+224 g, matcha en polvo 4 g, polvos de hornear 7,2 g, sal 1,4 g, chocolate de
+leche 40% picado 129 g, pistachos picados 65 g.
+Procedimiento: cremar mantequilla + azúcares + glucosa + zeste + pasta de
+pistachos 5-6 min velocidad media → agregar huevo hasta homogeneizar → bajar
+a mínimo, agregar secos tamizados + chips + pistachos picados → porcionar
+esferas de 25 g → congelar mínimo 3 h → hornear a 180°C 7-8 min → decorar
+con pistachos verdes y praliné de pistacho recién horneadas → enfriar antes
+de desmoldar.
+
+### Galleta de Mantequilla y Almendras — rinde 30 unidades (800,4 g)
+Ingredientes: mantequilla 126 g, azúcar 155 g, glucosa 38 g, pasta de
+almendras 75 g, huevos 60 g, harina floja 231 g, almendras laminadas
+tostadas 107 g, sal 3 g, polvos de hornear 3,4 g, bicarbonato 2 g.
+Procedimiento: cremar mantequilla + azúcar + pasta de almendras + glucosa
+~5 min velocidad media → agregar huevo hasta emulsionar → bajar a mínimo,
+agregar secos tamizados + almendras laminadas → porcionar esferas de 25 g y
+pasar por almendras laminadas → congelar mínimo 3 h → hornear a 180°C 7-8
+min → enfriar antes de desmoldar.
+
+### Galleta Streusel de Frambuesa — rinde 16 cuadrados de 5x5 cm
+**Streusel de almendras** (241 g): harina floja 60 g, harina de almendras
+60 g, mantequilla fría 60 g, azúcar 60 g, sal 1 g. Mezclar todo hasta formar
+migas, reservar congelado.
+**Masa Sablée** (500,5 g): mantequilla fría 72 g, azúcar flor 65 g, huevos
+55 g, harina floja 220 g, harina de almendras 78 g, pasta de vainilla 10 g,
+sal 0,5 g. Cremar azúcar flor + mantequilla → agregar huevos + vainilla,
+cremar hasta integrar → agregar secos, mezclar sin amasar de más → estirar a
+3 mm → congelar, reposar idealmente un día.
+**Mermelada de frambuesas** (291,7 g, se usan 230 g): puré de frambuesas
+144 g, azúcar 144 g, pectina NH 2,8 g, ácido cítrico 0,9 g. Calentar puré a
+60°C → agregar azúcar+pectina → cocinar a 103°C → apagar, agregar ácido
+cítrico → enfriar, reservar en manga.
+**Montaje:** cortar la masa sablée con la base de un molde cuadrado de
+20x20 cm → forrar el molde aceitado y forrado con papel → verter 230 g de
+mermelada → espolvorear el streusel de manera uniforme → congelar mínimo
+2 h → hornear a 160°C 20-25 min → enfriar, desmoldar, cortar cuadrados de
+5x5 cm → espolvorear con azúcar flor antes de servir.
+
+### Galleta Barrita de Nuez — rinde 10 barritas de 8x5 cm
+**Relleno de nueces** (352 g): leche condensada 195 g, mantequilla 30 g,
+nueces picadas 125 g, sal 2 g. Cocinar leche condensada + mantequilla hasta
+dorar → agregar nueces + sal, cocinar hasta espesar.
+**Streusel de nueces** (480 g): harina floja 120 g, harina de almendras
+60 g, nueces 60 g, mantequilla fría 120 g, azúcar 120 g. Procesar harina +
+harina de almendras + azúcar + nueces hasta polvo fino → agregar mantequilla
+fría, procesar hasta migas.
+**Montaje:** extender la mitad del streusel en la base de un molde cuadrado
+de 22x22 cm → verter el relleno de nueces, alisar → distribuir el resto del
+streusel encima → congelar mínimo 2 h → hornear a 160°C ~20 min → enfriar,
+desmoldar, cortar tiras de 8x5 cm.
+
+### Mantecados — rinde 30 unidades cada receta (cortador de 5 cm, 5 mm espesor)
+Procedimiento común a las 6 variantes: procesar los secos hasta polvo fino →
+agregar la grasa (manteca vegetal) y procesar hasta formar masa → integrar a
+mano → estirar a 5 mm entre papel guitarra → cortar con cortador de 5 cm →
+congelar 20 min → hornear a 150°C 10-12 min → enfriar completamente antes de
+retirar de la bandeja.
+- **Tradicional** (350 g): harina floja 134 g, harina de almendras 27 g,
+  canela en polvo 1 g, azúcar flor 81 g, manteca vegetal 107 g.
+- **De Maní** (350,5 g): harina floja 83 g, maní 112 g, sal 0,5 g, azúcar
+  flor 84 g, manteca vegetal 71 g.
+- **De Nuez** (350 g): harina floja 115 g, nueces 81 g, canela en polvo 1 g,
+  azúcar flor 81 g, manteca vegetal 72 g.
+- **De Sésamo** (351 g): harina floja 97 g, tahini 74 g, canela en polvo
+  1 g, azúcar flor 81 g, manteca vegetal 71 g, sésamo negro 27 g.
+- **De Pistacho** (351 g): harina floja 83 g, pistachos pelados 112 g,
+  azúcar flor 84 g, sal 0,5 g, manteca vegetal 71 g.
+- **De Chocolate y Naranja** (349 g): harina floja 95 g, harina de
+  almendras 27 g, nibs de cacao 80 g, azúcar flor 80 g, zeste de naranja
+  2 g, manteca vegetal 65 g.
+
+### Florentinas — rinde 15 unidades
+Ingredientes: crema de leche 35% materia grasa 100 g, azúcar 110 g, miel
+70 g, 1 vaina de vainilla, flor de sal 1 g, almendras enfiladas 200 g (más
+chocolate negro 56% templado para bañar, cantidad no especificada).
+Procedimiento: retirar las semillas de la vaina de vainilla y agregarlas a
+la crema de leche → cocinar crema + azúcar + miel a fuego medio hasta 115°C
+→ agregar almendras + flor de sal, seguir cociendo hasta 118°C → porcionar
+en molde semiesfera de 4 cm → congelar → desmoldar, hornear a 180°C hasta
+dorar → cortar bordes con cortador de 5 cm (opcional) → bañar la mitad con
+chocolate negro 56% templado.
+
 ## Notas de food cost objetivo por categoría (benchmark del negocio)
 - Facturas: objetivo <20% (rango sano boutique 25-35%, facturas están debajo por ser el producto ancla)
 - Medialunas Clásicas: objetivo <30%
