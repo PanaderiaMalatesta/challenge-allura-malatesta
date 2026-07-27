@@ -24,7 +24,7 @@ internet (HTTPS), que viene habilitada por defecto.
    source .venv/bin/activate
    pip install -r requirements.txt
    ```
-4. Crear el archivo `.env` con `GOOGLE_API_KEY` y `TELEGRAM_BOT_TOKEN`, y
+4. Crear el archivo `.env` con `COHERE_API_KEY` y `TELEGRAM_BOT_TOKEN`, y
    construir el índice:
    ```bash
    python -m src.ingest

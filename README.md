@@ -35,7 +35,7 @@ clientes.
 - **Documento (parte 1 del challenge):** `data/recetas.md`, con las recetas e
   ingredientes reales ya costeados en el plan de negocios de Malatesta
   (facturas, medialunas, sándwiches).
-- **Agente (parte 2):** LangChain + Gemini (`gemini-2.0-flash`), con 5
+- **Agente (parte 2):** LangChain + Cohere (`command-a-03-2025`), con 5
   herramientas: búsqueda de receta, escalado/costeo, búsqueda semántica en el
   recetario, registro de producción diaria, y cálculo de costo diario.
 - **Deploy (parte 3):** bot de Telegram (long-polling) corriendo en una
@@ -62,11 +62,11 @@ clientes.
    .venv\Scripts\activate
    pip install -r requirements.txt
    ```
-2. Conseguir una API key gratuita de Gemini en [Google AI Studio](https://aistudio.google.com/apikey)
+2. Conseguir una API key gratuita en [Cohere](https://dashboard.cohere.com/api-keys)
    y un token de bot de Telegram hablando con [@BotFather](https://t.me/BotFather)
    (comando `/newbot`). Copiar ambos a un archivo `.env` (basado en `.env.example`):
    ```
-   GOOGLE_API_KEY=tu_key_aqui
+   COHERE_API_KEY=tu_key_aqui
    TELEGRAM_BOT_TOKEN=tu_token_aqui
    ```
 3. Construir el índice de búsqueda del recetario:
