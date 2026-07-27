@@ -15,6 +15,8 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 COSTEO_PATH = DATA_DIR / "costeo_unitario.csv"
 PRODUCCION_PATH = DATA_DIR / "produccion_diaria.csv"
 
+COMPONENTES = ["costo_masa", "costo_relleno", "costo_cobertura", "costo_almibar", "costo_otros"]
+
 BENCHMARK_FOOD_COST = {
     "Facturas": (0, 20),
     "Medialuna_Tradicional": (20, 28),
@@ -28,38 +30,46 @@ BENCHMARK_FOOD_COST = {
 
 
 def _load_costeo() -> pd.DataFrame:
-    return pd.read_csv(COSTEO_PATH)
+    df = pd.read_csv(COSTEO_PATH)
+    df["costo_unitario"] = df[COMPONENTES].sum(axis=1)
+    return df
 
 
 def _load_produccion() -> pd.DataFrame:
     return pd.read_csv(PRODUCCION_PATH)
 
 
-def _variantes_disponibles(costeo: pd.DataFrame, producto: str) -> pd.DataFrame:
+def _fila_producto(costeo: pd.DataFrame, producto: str) -> pd.DataFrame:
     return costeo[costeo["producto"].str.lower() == producto.lower()]
+
+
+def _fila_variante(costeo: pd.DataFrame, producto: str, variante: str) -> pd.DataFrame:
+    return costeo[
+        (costeo["producto"].str.lower() == producto.lower())
+        & (costeo["variante"].str.lower() == variante.lower())
+    ]
 
 
 def buscar_receta(producto: str) -> str:
     """Devuelve el desglose de componentes y costo unitario de un producto (todas sus variantes)."""
     costeo = _load_costeo()
-    filas = _variantes_disponibles(costeo, producto)
+    filas = _fila_producto(costeo, producto)
     if filas.empty:
         disponibles = sorted(costeo["producto"].unique())
         return f"No encontré '{producto}' en el costeo. Productos disponibles: {', '.join(disponibles)}."
 
     lineas = []
-    for variante, grupo in filas.groupby("variante"):
-        costo_total = grupo["costo_unitario"].sum()
-        precio = grupo["precio_venta"].iloc[0]
-        categoria = grupo["categoria"].iloc[0]
+    for fila in filas.itertuples():
         componentes = ", ".join(
-            f"{row.componente}: ${row.costo_unitario:.0f}" for row in grupo.itertuples()
+            f"{c.replace('costo_', '')}: ${getattr(fila, c):.0f}"
+            for c in COMPONENTES
+            if getattr(fila, c) > 0
         )
-        food_cost = costo_total / precio * 100 if precio else None
+        food_cost = fila.costo_unitario / fila.precio_venta * 100 if fila.precio_venta else None
         fc_txt = f"{food_cost:.1f}%" if food_cost is not None else "s/precio"
         lineas.append(
-            f"- {producto} {variante} [{categoria}]: costo unitario ${costo_total:.0f} "
-            f"({componentes}) | precio venta ${precio:.0f} | food cost {fc_txt}"
+            f"- {producto} {fila.variante} [{fila.categoria}]: costo unitario ${fila.costo_unitario:.0f} "
+            f"({componentes}) | precio venta ${fila.precio_venta:.0f} | food cost {fc_txt}"
         )
     return "\n".join(lineas)
 
@@ -72,19 +82,17 @@ def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_obje
     (si existe) y muestra el food cost real resultante.
     """
     costeo = _load_costeo()
-    filas = costeo[
-        (costeo["producto"].str.lower() == producto.lower())
-        & (costeo["variante"].str.lower() == variante.lower())
-    ]
-    if filas.empty:
-        disponibles = _variantes_disponibles(costeo, producto)["variante"].unique()
+    fila = _fila_variante(costeo, producto, variante)
+    if fila.empty:
+        disponibles = _fila_producto(costeo, producto)["variante"].unique()
         if len(disponibles) == 0:
             return f"No encontré el producto '{producto}'."
         return f"No encontré la variante '{variante}' de {producto}. Variantes disponibles: {', '.join(disponibles)}."
 
-    costo_unitario = filas["costo_unitario"].sum()
-    precio_unitario_actual = filas["precio_venta"].iloc[0]
-    categoria = filas["categoria"].iloc[0]
+    fila = fila.iloc[0]
+    costo_unitario = fila["costo_unitario"]
+    precio_unitario_actual = fila["precio_venta"]
+    categoria = fila["categoria"]
 
     costo_total = costo_unitario * cantidad
 
@@ -128,15 +136,13 @@ def registrar_produccion(fecha: str, producto: str, variante: str, cantidad: flo
         return "Fecha invalida, usa formato YYYY-MM-DD."
 
     costeo = _load_costeo()
-    filas = costeo[
-        (costeo["producto"].str.lower() == producto.lower())
-        & (costeo["variante"].str.lower() == variante.lower())
-    ]
-    if filas.empty:
+    fila = _fila_variante(costeo, producto, variante)
+    if fila.empty:
         return f"No encontré la receta de {producto} {variante}, no se registró producción."
 
-    costo_unitario = filas["costo_unitario"].sum()
-    precio_unitario = filas["precio_venta"].iloc[0]
+    fila = fila.iloc[0]
+    costo_unitario = fila["costo_unitario"]
+    precio_unitario = fila["precio_venta"]
     costo_total = costo_unitario * cantidad
     ingreso_total = precio_unitario * cantidad
     ganancia_total = ingreso_total - costo_total

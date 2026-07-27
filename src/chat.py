@@ -3,8 +3,8 @@ from .agent import build_agent
 
 
 def main() -> None:
-    executor = build_agent()
-    chat_history = []
+    graph = build_agent()
+    messages = []
     print("Agente interno Malatesta. Escribe 'salir' para terminar.\n")
     while True:
         pregunta = input("Tú: ").strip()
@@ -12,11 +12,11 @@ def main() -> None:
             break
         if not pregunta:
             continue
-        resultado = executor.invoke({"input": pregunta, "chat_history": chat_history})
-        respuesta = resultado["output"]
+        messages.append(("human", pregunta))
+        resultado = graph.invoke({"messages": messages})
+        messages = resultado["messages"]
+        respuesta = messages[-1].content
         print(f"Agente: {respuesta}\n")
-        chat_history.append(("human", pregunta))
-        chat_history.append(("ai", respuesta))
 
 
 if __name__ == "__main__":

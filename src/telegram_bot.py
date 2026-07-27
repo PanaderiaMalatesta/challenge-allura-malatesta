@@ -17,16 +17,17 @@ from .agent import build_agent
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-# Un AgentExecutor por chat, para que cada conversacion tenga su propio historial.
-_executors: dict[int, object] = {}
-_chat_histories: dict[int, list] = {}
+# Un grafo de agente + historial de mensajes por chat, para que cada
+# conversacion de Telegram tenga su propio contexto.
+_graph = None
+_chat_messages: dict[int, list] = {}
 
 
-def _get_executor(chat_id: int):
-    if chat_id not in _executors:
-        _executors[chat_id] = build_agent()
-        _chat_histories[chat_id] = []
-    return _executors[chat_id], _chat_histories[chat_id]
+def _get_graph():
+    global _graph
+    if _graph is None:
+        _graph = build_agent()
+    return _graph
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -39,13 +40,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def responder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     pregunta = update.message.text
-    executor, historial = _get_executor(chat_id)
 
-    resultado = executor.invoke({"input": pregunta, "chat_history": historial})
-    respuesta = resultado["output"]
+    graph = _get_graph()
+    messages = _chat_messages.setdefault(chat_id, [])
+    messages.append(("human", pregunta))
 
-    historial.append(("human", pregunta))
-    historial.append(("ai", respuesta))
+    resultado = graph.invoke({"messages": messages})
+    _chat_messages[chat_id] = resultado["messages"]
+    respuesta = resultado["messages"][-1].content
 
     await update.message.reply_text(respuesta)
 

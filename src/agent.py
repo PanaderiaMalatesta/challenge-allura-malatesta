@@ -5,16 +5,17 @@ Combina:
   matematica pasa por Python, nunca por el LLM.
 - Un retriever sobre el recetario (ingest.py) para preguntas abiertas sobre
   ingredientes/procedimientos.
+
+Usa la API de agentes de LangChain 1.x (`create_agent`, basada en LangGraph).
 """
 from __future__ import annotations
 
 import os
 
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_agent
 from langchain_core.tools import tool
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_cohere import ChatCohere
 
 from . import tools as t
 from .ingest import load_index
@@ -53,7 +54,9 @@ def herramienta_buscar_receta(producto: str) -> str:
 
 
 @tool
-def herramienta_escalar_receta(producto: str, variante: str, cantidad: float, food_cost_objetivo: float = None) -> str:
+def herramienta_escalar_receta(
+    producto: str, variante: str, cantidad: float, food_cost_objetivo: float | None = None
+) -> str:
     """Calcula el costo de fabricar `cantidad` unidades de producto/variante.
     Si se da food_cost_objetivo (numero 0-100), calcula el precio de venta sugerido para ese food cost.
     Si no, usa el precio de venta actual del catalogo y muestra el food cost real."""
@@ -80,33 +83,25 @@ def herramienta_buscar_en_recetario(pregunta: str) -> str:
     return "\n---\n".join(d.page_content for d in docs)
 
 
-def build_agent() -> AgentExecutor:
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+TOOLS = [
+    herramienta_buscar_receta,
+    herramienta_escalar_receta,
+    herramienta_registrar_produccion,
+    herramienta_costo_diario,
+    herramienta_buscar_en_recetario,
+]
+
+
+def build_agent():
+    llm = ChatCohere(
+        model="command-a-03-2025",
         temperature=0,
-        google_api_key=os.environ["GOOGLE_API_KEY"],
+        cohere_api_key=os.environ["COHERE_API_KEY"],
     )
-
-    tools = [
-        herramienta_buscar_receta,
-        herramienta_escalar_receta,
-        herramienta_registrar_produccion,
-        herramienta_costo_diario,
-        herramienta_buscar_en_recetario,
-    ]
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", SYSTEM_PROMPT),
-        MessagesPlaceholder("chat_history", optional=True),
-        ("human", "{input}"),
-        MessagesPlaceholder("agent_scratchpad"),
-    ])
-
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    return AgentExecutor(agent=agent, tools=tools, verbose=False)
+    return create_agent(model=llm, tools=TOOLS, system_prompt=SYSTEM_PROMPT)
 
 
 def ask(pregunta: str) -> str:
-    executor = build_agent()
-    resultado = executor.invoke({"input": pregunta})
-    return resultado["output"]
+    graph = build_agent()
+    resultado = graph.invoke({"messages": [("human", pregunta)]})
+    return resultado["messages"][-1].content
