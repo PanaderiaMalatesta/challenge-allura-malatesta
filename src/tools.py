@@ -45,6 +45,12 @@ BENCHMARK_FOOD_COST = {
 }
 
 
+def _normalizar(texto: str) -> str:
+    """Minusculas y sin espacios/guiones bajos, para poder comparar 'masa quebrada'
+    contra 'MasaQuebrada_Base' sin que el espaciado o el casing importen."""
+    return texto.lower().replace(" ", "").replace("_", "")
+
+
 def _read_csv_flexible(path: Path) -> pd.DataFrame:
     """Lee un CSV detectando automaticamente si el delimitador es ',' o ';'.
 
@@ -85,8 +91,8 @@ def _costeo_por_componente(producto: str, variante: str) -> dict[str, float]:
     ingredientes = _load_ingredientes()
     precios = _load_precios_insumos()
     filas = ingredientes[
-        (ingredientes["producto"].str.lower() == producto.lower())
-        & (ingredientes["variante"].str.lower() == variante.lower())
+        (ingredientes["producto"].apply(_normalizar) == _normalizar(producto))
+        & (ingredientes["variante"].apply(_normalizar) == _normalizar(variante))
     ]
     costos: dict[str, float] = {}
     for fila in filas.itertuples():
@@ -98,8 +104,8 @@ def _costeo_por_componente(producto: str, variante: str) -> dict[str, float]:
 def _info_catalogo(producto: str, variante: str) -> pd.Series | None:
     catalogo = _load_catalogo()
     fila = catalogo[
-        (catalogo["producto"].str.lower() == producto.lower())
-        & (catalogo["variante"].str.lower() == variante.lower())
+        (catalogo["producto"].apply(_normalizar) == _normalizar(producto))
+        & (catalogo["variante"].apply(_normalizar) == _normalizar(variante))
     ]
     return None if fila.empty else fila.iloc[0]
 
@@ -147,14 +153,15 @@ def actualizar_precio_insumo(insumo: str, nuevo_precio: float) -> str:
 
 def listar_variantes(termino: str) -> str:
     """Lista los nombres de producto/variante que coincidan con `termino` (busca en
-    producto y categoria, sin distinguir mayusculas). Uso pensado para cuando el
-    usuario pide algo de forma generica (ej. "una receta de masa quebrada") y hay
-    que preguntarle cual variante especifica quiere, en vez de mostrar todo el
-    detalle de costeo de una vez."""
+    producto y categoria, sin distinguir mayusculas ni espaciado). Uso pensado
+    para cuando el usuario pide algo de forma generica (ej. "una receta de masa
+    quebrada") y hay que preguntarle cual variante especifica quiere, en vez de
+    mostrar todo el detalle de costeo de una vez."""
     catalogo = _load_catalogo()
-    mask = catalogo["producto"].str.contains(termino, case=False) | catalogo["categoria"].str.contains(
-        termino, case=False
-    )
+    termino_norm = _normalizar(termino)
+    mask = catalogo["producto"].apply(_normalizar).str.contains(termino_norm) | catalogo["categoria"].apply(
+        _normalizar
+    ).str.contains(termino_norm)
     filas = catalogo[mask]
     if filas.empty:
         return f"No encontré nada que coincida con '{termino}'."
@@ -164,7 +171,7 @@ def listar_variantes(termino: str) -> str:
 def buscar_receta(producto: str) -> str:
     """Devuelve el desglose de componentes y costo unitario de un producto (todas sus variantes)."""
     catalogo = _load_catalogo()
-    filas = catalogo[catalogo["producto"].str.lower() == producto.lower()]
+    filas = catalogo[catalogo["producto"].apply(_normalizar) == _normalizar(producto)]
     if filas.empty:
         disponibles = sorted(catalogo["producto"].unique())
         return f"No encontré '{producto}' en el catálogo. Productos disponibles: {', '.join(disponibles)}."
@@ -199,7 +206,7 @@ def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_obje
     info = _info_catalogo(producto, variante)
     if info is None:
         catalogo = _load_catalogo()
-        disponibles = catalogo[catalogo["producto"].str.lower() == producto.lower()]["variante"].unique()
+        disponibles = catalogo[catalogo["producto"].apply(_normalizar) == _normalizar(producto)]["variante"].unique()
         if len(disponibles) == 0:
             return f"No encontré el producto '{producto}'."
         return f"No encontré la variante '{variante}' de {producto}. Variantes disponibles: {', '.join(disponibles)}."
