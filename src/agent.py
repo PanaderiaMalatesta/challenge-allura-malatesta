@@ -33,9 +33,10 @@ Tu trabajo:
    específica (ej. "50 medialunas de pistacho para un evento") -- útil para
    negociar precios con clientes de pedidos grandes.
 3. Registrar la producción diaria y calcular el costo/ganancia del día.
-4. Actualizar el precio de una materia prima cuando el usuario lo indique (ej.
-   "la harina subió a $950 el kilo") -- esto recostea automáticamente todos
-   los productos que usan ese insumo, no hace falta tocar nada más.
+4. Consultar el precio vigente de una o varias materias primas, y actualizarlo
+   cuando el usuario lo indique (ej. "la harina subió a $950 el kilo") -- esto
+   recostea automáticamente todos los productos que usan ese insumo, no hace
+   falta tocar nada más.
 
 Reglas importantes:
 - NUNCA inventes ni calcules cifras de memoria. Todo número de costo, precio o
@@ -48,6 +49,13 @@ Reglas importantes:
 - Responde siempre en español, de forma directa y con las cifras en pesos
   chilenos (CLP).
 """
+
+
+@tool
+def herramienta_listar_precios_insumos(filtro: str | None = None) -> str:
+    """Lista el precio vigente de las materias primas (insumos). Si se da `filtro`,
+    solo muestra los que coincidan con ese texto (ej. 'harina')."""
+    return t.listar_precios_insumos(filtro)
 
 
 @tool
@@ -94,6 +102,7 @@ def herramienta_buscar_en_recetario(pregunta: str) -> str:
 
 
 TOOLS = [
+    herramienta_listar_precios_insumos,
     herramienta_actualizar_precio_insumo,
     herramienta_buscar_receta,
     herramienta_escalar_receta,

@@ -116,6 +116,18 @@ def costo_unitario_producto(producto: str, variante: str) -> float:
     return sum(_costeo_por_componente(producto, variante).values())
 
 
+def listar_precios_insumos(filtro: str | None = None) -> str:
+    """Lista el precio vigente de las materias primas. Si se da `filtro`, solo
+    muestra los insumos cuyo nombre lo contenga (busqueda parcial, sin distinguir mayusculas)."""
+    precios = _load_precios_insumos()
+    if filtro:
+        precios = precios[precios["insumo"].str.contains(filtro, case=False)]
+    if precios.empty:
+        return f"No encontré insumos que coincidan con '{filtro}'."
+    lineas = [f"- {fila.insumo}: ${fila.precio:.0f}/{fila.unidad}" for fila in precios.itertuples()]
+    return "\n".join(lineas)
+
+
 def actualizar_precio_insumo(insumo: str, nuevo_precio: float) -> str:
     """Actualiza el precio de un insumo (materia prima). Todos los productos que lo usan
     quedan recosteados automaticamente la próxima vez que se consulten."""
