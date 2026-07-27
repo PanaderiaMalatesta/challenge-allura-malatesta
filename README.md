@@ -20,8 +20,7 @@ challenge Allura/
 │   ├── ingest.py     # indexa recetas.md en un vector store (FAISS) para búsqueda semántica
 │   ├── agent.py      # agente LangChain (Gemini) que combina el retriever + las tools
 │   ├── chat.py       # CLI de prueba local
-│   ├── server.py     # API FastAPI + página web mínima, para el deploy en OCI
-│   └── static/index.html
+│   └── telegram_bot.py  # bot de Telegram -- interfaz principal, para el deploy en OCI
 ├── deploy/            # instrucciones de despliegue en OCI Compute
 └── requirements.txt
 ```
@@ -39,9 +38,11 @@ clientes.
 - **Agente (parte 2):** LangChain + Gemini (`gemini-2.0-flash`), con 5
   herramientas: búsqueda de receta, escalado/costeo, búsqueda semántica en el
   recetario, registro de producción diaria, y cálculo de costo diario.
-- **Deploy (parte 3):** FastAPI + Uvicorn en una instancia OCI Compute (Always
-  Free), con una página web mínima para consultar el agente desde el
-  navegador. Ver `deploy/oci_setup.md`.
+- **Deploy (parte 3):** bot de Telegram (long-polling) corriendo en una
+  instancia OCI Compute (Always Free). No requiere abrir puertos ni exponer
+  IP pública para funcionar -- el proceso solo hace conexiones salientes a la
+  API de Telegram, y se consulta directo desde la app de Telegram en el
+  celular. Ver `deploy/oci_setup.md`.
 
 ## Ejemplos de preguntas y respuestas
 
@@ -62,33 +63,34 @@ clientes.
    pip install -r requirements.txt
    ```
 2. Conseguir una API key gratuita de Gemini en [Google AI Studio](https://aistudio.google.com/apikey)
-   y copiarla a un archivo `.env` (basado en `.env.example`):
+   y un token de bot de Telegram hablando con [@BotFather](https://t.me/BotFather)
+   (comando `/newbot`). Copiar ambos a un archivo `.env` (basado en `.env.example`):
    ```
    GOOGLE_API_KEY=tu_key_aqui
+   TELEGRAM_BOT_TOKEN=tu_token_aqui
    ```
 3. Construir el índice de búsqueda del recetario:
    ```powershell
    python -m src.ingest
    ```
-4. Probar por consola:
+4. Probar por consola (sin Telegram, más rápido para depurar):
    ```powershell
    python -m src.chat
    ```
-5. O levantar el servidor local:
+5. O correr el bot de Telegram localmente:
    ```powershell
-   uvicorn src.server:app --reload
+   python -m src.telegram_bot
    ```
-   y abrir `http://localhost:8000` en el navegador.
+   y escribirle al bot desde la app de Telegram.
 
 ## Deploy en OCI
 
 Ver [`deploy/oci_setup.md`](deploy/oci_setup.md) para el paso a paso de la
-instancia Compute. Link/captura de la app corriendo en la nube:
+instancia Compute. Link/captura del bot respondiendo en producción:
 
 > _Pendiente — se agrega una vez creada la instancia OCI._
 
 ## Próximos pasos (fuera del alcance de este challenge)
 
-- Integración con WhatsApp Business para consultar el agente desde el celular.
 - Cargar recetas de tortas y pan de masa madre (Club del Pan) cuando estén
   costeadas con cantidades reales.
