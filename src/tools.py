@@ -162,11 +162,13 @@ def buscar_receta(producto: str) -> str:
             componentes = _costeo_por_componente(producto, fila.variante)
             costo_unitario = sum(componentes.values())
             detalle = ", ".join(f"{c}: ${v:.0f}" for c, v in componentes.items())
-        food_cost = costo_unitario / fila.precio_venta * 100 if fila.precio_venta else None
+        tiene_precio = pd.notna(fila.precio_venta)
+        food_cost = costo_unitario / fila.precio_venta * 100 if tiene_precio else None
         fc_txt = f"{food_cost:.1f}%" if food_cost is not None else "s/precio"
+        precio_txt = f"${fila.precio_venta:.0f}" if tiene_precio else "sin precio definido"
         lineas.append(
             f"- {producto} {fila.variante} [{fila.categoria}]: costo unitario ${costo_unitario:.0f} "
-            f"({detalle}) | precio venta ${fila.precio_venta:.0f} | food cost {fc_txt}"
+            f"({detalle}) | precio venta {precio_txt} | food cost {fc_txt}"
         )
     return "\n".join(lineas)
 
@@ -188,6 +190,7 @@ def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_obje
 
     costo_unitario = costo_unitario_producto(producto, variante)
     precio_unitario_actual = info["precio_venta"]
+    tiene_precio = pd.notna(precio_unitario_actual)
     categoria = info["categoria"]
 
     costo_total = costo_unitario * cantidad
@@ -204,9 +207,11 @@ def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_obje
             f"  Precio de venta sugerido para food cost {food_cost_objetivo:.0f}%: "
             f"${precio_sugerido_unitario:.0f}/u -> ${precio_sugerido_total:.0f} total"
         )
+    elif not tiene_precio:
+        resultado.append("  Este producto todavía no tiene precio de venta definido en el catálogo.")
     else:
         ingreso_total = precio_unitario_actual * cantidad
-        food_cost_real = costo_unitario / precio_unitario_actual * 100 if precio_unitario_actual else None
+        food_cost_real = costo_unitario / precio_unitario_actual * 100
         ganancia_total = ingreso_total - costo_total
         rango = BENCHMARK_FOOD_COST.get(categoria)
         rango_txt = f" (rango sano de referencia: {rango[0]}-{rango[1]}%)" if rango else ""
@@ -234,6 +239,8 @@ def registrar_produccion(fecha: str, producto: str, variante: str, cantidad: flo
     info = _info_catalogo(producto, variante)
     if info is None:
         return f"No encontré la receta de {producto} {variante}, no se registró producción."
+    if pd.isna(info["precio_venta"]):
+        return f"{producto} {variante} todavía no tiene precio de venta definido, no se puede registrar producción."
 
     costo_unitario = costo_unitario_producto(producto, variante)
     precio_unitario = info["precio_venta"]
