@@ -44,7 +44,12 @@ Reglas importantes:
     hace", "de qué está hecho") → usa herramienta_buscar_en_recetario, que
     busca en el texto del recetario. NO uses herramienta_buscar_receta para
     esto, esa herramienta es solo de costeo y NO devuelve ingredientes ni
-    pasos de preparación.
+    pasos de preparación. Después de mostrar la receta, SIEMPRE pregunta
+    "¿qué cantidad necesitas hacer?" antes de terminar la respuesta. Cuando el
+    usuario te responda con la cantidad, usa herramienta_escalar_ingredientes
+    (no herramienta_escalar_receta, que da el costo) para darle la lista de
+    insumos ya escalada en unidades reales (gramos/kg/L/unidades) para esa
+    cantidad.
   - Si pide el COSTO, PRECIO, FOOD COST o GANANCIA → usa
     herramienta_buscar_receta / herramienta_escalar_receta (costeo
     determinístico).
@@ -102,6 +107,15 @@ def herramienta_buscar_receta(producto: str) -> str:
 
 
 @tool
+def herramienta_escalar_ingredientes(producto: str, variante: str, cantidad: float) -> str:
+    """Devuelve la lista de insumos y cantidades REALES (gramos/kg/L/unidades) para
+    fabricar `cantidad` de un producto/variante -- para saber qué pesar/comprar.
+    Usar esto (no herramienta_escalar_receta, que da el COSTO) cuando el usuario
+    quiere hacer una receta a una cantidad específica."""
+    return t.escalar_ingredientes(producto, variante, cantidad)
+
+
+@tool
 def herramienta_escalar_receta(
     producto: str, variante: str, cantidad: float, food_cost_objetivo: float | None = None
 ) -> str:
@@ -132,6 +146,7 @@ def herramienta_buscar_en_recetario(pregunta: str) -> str:
 
 
 TOOLS = [
+    herramienta_escalar_ingredientes,
     herramienta_listar_variantes,
     herramienta_listar_precios_insumos,
     herramienta_actualizar_precio_insumo,

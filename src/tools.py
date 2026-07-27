@@ -256,6 +256,54 @@ def buscar_receta(producto: str) -> str:
     return "\n".join(lineas)
 
 
+def _mensaje_no_encontrado(catalogo: pd.DataFrame, producto: str, variante: str) -> str:
+    candidatas = _buscar_filas(catalogo, f"{producto} {variante}")
+    if len(candidatas) > 1:
+        opciones = ", ".join(f"{_legible(f.producto)} {_legible(f.variante)}" for f in candidatas.itertuples())
+        return f"Encontré varias coincidencias para '{producto} {variante}', ¿cuál de estas es?: {opciones}"
+    mejores = _alternativas_fuzzy(catalogo, f"{producto} {variante}")
+    if mejores:
+        opciones = ", ".join(f"{_legible(f.producto)} {_legible(f.variante)}" for f in mejores)
+        return f"No encontré '{producto} {variante}' exacto. ¿Quisiste decir alguna de estas?: {opciones}"
+    return f"No encontré el producto '{producto}' {variante}."
+
+
+def _formatear_cantidad(total: float, unidad: str) -> str:
+    if unidad == "g" and total >= 1000:
+        return f"{total / 1000:.2f} kg"
+    if unidad == "mL" and total >= 1000:
+        return f"{total / 1000:.2f} L"
+    return f"{total:.2f} {unidad}"
+
+
+def escalar_ingredientes(producto: str, variante: str, cantidad: float) -> str:
+    """Devuelve la lista de insumos y cantidades reales (gramos/kg/L/unidades) que
+    hay que pesar/usar para fabricar `cantidad` de un producto/variante -- para
+    saber QUÉ COMPRAR O PESAR, a diferencia de escalar_receta que da el COSTO."""
+    catalogo = _load_catalogo()
+    info = _info_catalogo(producto, variante)
+    if info is None:
+        return _mensaje_no_encontrado(catalogo, producto, variante)
+    producto, variante = info["producto"], info["variante"]
+
+    ingredientes = _load_ingredientes()
+    filas = ingredientes[
+        (ingredientes["producto"].apply(_normalizar) == _normalizar(producto))
+        & (ingredientes["variante"].apply(_normalizar) == _normalizar(variante))
+    ]
+    if filas.empty:
+        return f"{_legible(producto)} {_legible(variante)} no tiene un desglose de insumos registrado (es costo fijo, sin receta detallada)."
+
+    acumulado: dict[tuple[str, str], float] = {}
+    for fila in filas.itertuples():
+        clave = (fila.insumo, fila.unidad)
+        acumulado[clave] = acumulado.get(clave, 0.0) + fila.cantidad * cantidad
+
+    lineas = [f"Para {cantidad:g} de {_legible(producto)} {_legible(variante)} necesitas:"]
+    lineas += [f"  - {insumo}: {_formatear_cantidad(total, unidad)}" for (insumo, unidad), total in acumulado.items()]
+    return "\n".join(lineas)
+
+
 def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_objetivo: float | None = None) -> str:
     """Escala el costo de un producto/variante para una cantidad objetivo de unidades.
 
@@ -265,16 +313,7 @@ def escalar_receta(producto: str, variante: str, cantidad: float, food_cost_obje
     """
     info = _info_catalogo(producto, variante)
     if info is None:
-        catalogo = _load_catalogo()
-        candidatas = _buscar_filas(catalogo, f"{producto} {variante}")
-        if len(candidatas) > 1:
-            opciones = ", ".join(f"{_legible(f.producto)} {_legible(f.variante)}" for f in candidatas.itertuples())
-            return f"Encontré varias coincidencias para '{producto} {variante}', ¿cuál de estas es?: {opciones}"
-        mejores = _alternativas_fuzzy(catalogo, f"{producto} {variante}")
-        if mejores:
-            opciones = ", ".join(f"{_legible(f.producto)} {_legible(f.variante)}" for f in mejores)
-            return f"No encontré '{producto} {variante}' exacto. ¿Quisiste decir alguna de estas?: {opciones}"
-        return f"No encontré el producto '{producto}' {variante}."
+        return _mensaje_no_encontrado(_load_catalogo(), producto, variante)
 
     producto, variante = info["producto"], info["variante"]
     costo_unitario = costo_unitario_producto(producto, variante)
