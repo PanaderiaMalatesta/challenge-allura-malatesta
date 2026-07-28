@@ -106,6 +106,8 @@ Bot en producción: **@chef_malatesta_bot** (t.me/chef_malatesta_bot).
 
 ### Evidencia — conversación real en producción
 
+![Conversación real con el bot en producción](deploy/evidencia.jpg)
+
 ```
 Tú: dame una receta de masa quebrada... (interacción previa: bot mostró
     receta de Medialuna Tradicional -- masa, almíbar, costo $408/u,
