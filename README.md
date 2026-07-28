@@ -131,9 +131,3 @@ Bot: Para hacer 400 medialunas tradicionales, necesitarás los siguientes
 Cifras verificadas contra `recetas_ingredientes.csv` (masa + almíbar por
 unidad × 400) — coinciden exactas.
 
-## Próximos pasos (fuera del alcance de este challenge)
-
-- Completar precios de insumos pendientes (quedan ~27 insumos de la categoría
-  Galletas sin cotizar, ver `data/precios_insumos.csv`, valores en $0).
-- Cargar recetas de tortas y pan de masa madre (Club del Pan) cuando estén
-  costeadas con cantidades reales.
