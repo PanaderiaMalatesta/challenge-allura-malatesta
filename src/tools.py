@@ -14,6 +14,7 @@ from __future__ import annotations
 import datetime as _dt
 import difflib
 import re
+import unicodedata
 from pathlib import Path
 
 import pandas as pd
@@ -47,9 +48,15 @@ BENCHMARK_FOOD_COST = {
 }
 
 
+_STOPWORDS = {"de", "la", "el", "los", "las", "del", "y", "a", "en", "una", "un", "con", "sin"}
+
+
 def _normalizar(texto: str) -> str:
-    """Minusculas y sin espacios/guiones bajos, para poder comparar 'masa quebrada'
-    contra 'MasaQuebrada_Base' sin que el espaciado o el casing importen."""
+    """Minusculas, sin tildes y sin espacios/guiones bajos, para poder comparar
+    'vainilla de Tahití' contra 'vainilla_tahiti' sin que importen mayusculas,
+    acentos o espaciado."""
+    texto = unicodedata.normalize("NFKD", texto)
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
     return texto.lower().replace(" ", "").replace("_", "")
 
 
@@ -197,15 +204,47 @@ def actualizar_precio_insumo(insumo: str, nuevo_precio: float) -> str:
     return f"Precio de {nombre_real} actualizado: ${precio_anterior:.0f} -> ${nuevo_precio:.0f}."
 
 
-def _mask_ingrediente(ingredientes: pd.DataFrame, producto: str, variante: str, insumo: str, componente: str | None) -> pd.Series:
+def _filas_receta(ingredientes: pd.DataFrame, producto: str, variante: str, componente: str | None = None) -> pd.DataFrame:
+    """Filas de recetas_ingredientes.csv para un producto/variante (y opcionalmente
+    componente), por igualdad normalizada exacta."""
     mask = (
         (ingredientes["producto"].apply(_normalizar) == _normalizar(producto))
         & (ingredientes["variante"].apply(_normalizar) == _normalizar(variante))
-        & (ingredientes["insumo"].apply(_normalizar) == _normalizar(insumo))
     )
     if componente:
         mask &= ingredientes["componente"].apply(_normalizar) == _normalizar(componente)
-    return mask
+    return ingredientes[mask]
+
+
+def _resolver_insumo_en_filas(filas: pd.DataFrame, texto_insumo: str) -> pd.DataFrame:
+    """Encuentra, dentro de `filas` (ya acotadas a una receta), cuales coinciden
+    con `texto_insumo`. Tolera texto libre (ej. 'vainilla de Tahiti' encuentra
+    'vainilla_tahiti', ignorando la palabra de relleno 'de') y errores de tipeo
+    via similitud, para no exigir el nombre exacto del insumo."""
+    palabras = [p for p in re.split(r"\s+", texto_insumo.strip().lower()) if p and _normalizar(p) not in _STOPWORDS]
+    if palabras:
+
+        def _coincide(fila) -> bool:
+            campo = _normalizar(fila.insumo)
+            return all(_normalizar(palabra) in campo for palabra in palabras)
+
+        candidatas = filas[filas.apply(_coincide, axis=1)]
+        if not candidatas.empty:
+            return candidatas
+
+    if filas.empty:
+        return filas
+    texto_norm = _normalizar(texto_insumo)
+    puntajes = [
+        (difflib.SequenceMatcher(None, texto_norm, _normalizar(fila.insumo)).ratio(), idx)
+        for idx, fila in filas.iterrows()
+    ]
+    puntajes.sort(key=lambda par: par[0], reverse=True)
+    mejor = puntajes[0][0]
+    if mejor < 0.4:
+        return filas.iloc[0:0]
+    mejores_idx = [idx for puntaje, idx in puntajes if puntaje >= mejor - 0.05]
+    return filas.loc[mejores_idx]
 
 
 def _asegurar_en_catalogo(producto: str, variante: str) -> None:
@@ -231,8 +270,12 @@ def agregar_ingrediente_receta(producto: str, variante: str, componente: str, in
         return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
     ingredientes = _load_ingredientes()
-    mask = _mask_ingrediente(ingredientes, producto, variante, insumo, componente)
-    if mask.any():
+    filas_receta = _filas_receta(ingredientes, producto, variante, componente)
+    # Solo bloquear duplicados EXACTOS (sin el fallback difuso) -- lo difuso es
+    # correcto para encontrar algo que ya existe al editar/eliminar, pero aca
+    # produciria falsos positivos y bloquearia insumos nuevos legitimos.
+    ya_existe = filas_receta["insumo"].apply(_normalizar).eq(_normalizar(insumo)).any()
+    if ya_existe:
         return (
             f"{insumo} ya existe en {_legible(producto)} {_legible(variante)} ({componente}). "
             "Usa editar_ingrediente_receta si quieres cambiar la cantidad."
@@ -249,22 +292,40 @@ def agregar_ingrediente_receta(producto: str, variante: str, componente: str, in
     return f"Agregado: {_legible(producto)} {_legible(variante)} ahora incluye {insumo} {cantidad:g}{unidad} en {componente}."
 
 
-def eliminar_ingrediente_receta(producto: str, variante: str, insumo: str, componente: str | None = None) -> str:
-    """Elimina un insumo de una receta. Si el mismo insumo aparece en mas de un
-    componente (ej. 'azucar' en Masa y en Almibar), hay que especificar
-    `componente` para saber cual quitar."""
-    ingredientes = _load_ingredientes()
-    mask = _mask_ingrediente(ingredientes, producto, variante, insumo, componente)
-    filas = ingredientes[mask]
-    if filas.empty:
-        return f"No encontré '{insumo}' en {_legible(producto)} {_legible(variante)}."
-    if not componente and filas["componente"].nunique() > 1:
-        opciones = ", ".join(filas["componente"].unique())
-        return f"'{insumo}' aparece en varios componentes de {_legible(producto)} {_legible(variante)}: {opciones}. Especifica cual (componente)."
+def eliminar_ingrediente_receta(
+    producto: str, variante: str, insumo: str, componente: str | None = None, confirmado: bool = False,
+) -> str:
+    """Elimina un insumo de una receta. Tolera texto libre y errores de tipeo en
+    `insumo` (busca la coincidencia mas parecida dentro de esa receta). Si el
+    insumo aparece en mas de un componente, hay que especificar `componente`.
 
-    ingredientes = ingredientes[~mask]
+    SIEMPRE requiere confirmacion: la primera llamada (confirmado=False, el
+    default) NO elimina nada, solo devuelve una pregunta de confirmacion con el
+    insumo exacto que se borraria. Solo se elimina de verdad cuando se vuelve a
+    llamar con confirmado=True (despues de que el usuario diga que si)."""
+    ingredientes = _load_ingredientes()
+    filas_receta = _filas_receta(ingredientes, producto, variante, componente)
+    if filas_receta.empty:
+        return f"No encontré la receta {_legible(producto)} {_legible(variante)}."
+
+    candidatas = _resolver_insumo_en_filas(filas_receta, insumo)
+    if candidatas.empty:
+        disponibles = ", ".join(filas_receta["insumo"].unique())
+        return f"No encontré nada parecido a '{insumo}' en {_legible(producto)} {_legible(variante)}. Insumos en esa receta: {disponibles}."
+    if len(candidatas) > 1:
+        opciones = ", ".join(f"{f.insumo} ({f.componente})" for f in candidatas.itertuples())
+        return f"Hay varias coincidencias para '{insumo}': {opciones}. Especifica cual (y el componente si hace falta)."
+
+    fila = candidatas.iloc[0]
+    if not confirmado:
+        return (
+            f"¿Confirmas eliminar {fila.insumo} ({fila.cantidad:g}{fila.unidad}) de "
+            f"{_legible(producto)} {_legible(variante)} ({fila.componente})? Responde que sí para confirmar."
+        )
+
+    ingredientes = ingredientes.drop(candidatas.index)
     ingredientes.to_csv(INGREDIENTES_PATH, index=False)
-    return f"Eliminado: {insumo} de {_legible(producto)} {_legible(variante)}."
+    return f"Eliminado: {fila.insumo} de {_legible(producto)} {_legible(variante)} ({fila.componente})."
 
 
 def editar_ingrediente_receta(
@@ -277,24 +338,28 @@ def editar_ingrediente_receta(
         return f"Unidad '{nueva_unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
     ingredientes = _load_ingredientes()
-    mask = _mask_ingrediente(ingredientes, producto, variante, insumo, componente)
-    filas = ingredientes[mask]
-    if filas.empty:
-        return f"No encontré '{insumo}' en {_legible(producto)} {_legible(variante)}."
-    if not componente and filas["componente"].nunique() > 1:
-        opciones = ", ".join(filas["componente"].unique())
-        return f"'{insumo}' aparece en varios componentes de {_legible(producto)} {_legible(variante)}: {opciones}. Especifica cual (componente)."
+    filas_receta = _filas_receta(ingredientes, producto, variante, componente)
+    if filas_receta.empty:
+        return f"No encontré la receta {_legible(producto)} {_legible(variante)}."
 
-    cantidad_anterior = filas.iloc[0]["cantidad"]
-    unidad_anterior = filas.iloc[0]["unidad"]
-    ingredientes.loc[mask, "cantidad"] = nueva_cantidad
+    candidatas = _resolver_insumo_en_filas(filas_receta, insumo)
+    if candidatas.empty:
+        disponibles = ", ".join(filas_receta["insumo"].unique())
+        return f"No encontré nada parecido a '{insumo}' en {_legible(producto)} {_legible(variante)}. Insumos en esa receta: {disponibles}."
+    if len(candidatas) > 1:
+        opciones = ", ".join(f"{f.insumo} ({f.componente})" for f in candidatas.itertuples())
+        return f"Hay varias coincidencias para '{insumo}': {opciones}. Especifica cual (y el componente si hace falta)."
+
+    fila = candidatas.iloc[0]
+    cantidad_anterior, unidad_anterior = fila.cantidad, fila.unidad
+    ingredientes.loc[candidatas.index, "cantidad"] = nueva_cantidad
     if nueva_unidad is not None:
-        ingredientes.loc[mask, "unidad"] = nueva_unidad
+        ingredientes.loc[candidatas.index, "unidad"] = nueva_unidad
     ingredientes.to_csv(INGREDIENTES_PATH, index=False)
 
     unidad_final = nueva_unidad or unidad_anterior
     return (
-        f"{insumo} en {_legible(producto)} {_legible(variante)} actualizado: "
+        f"{fila.insumo} en {_legible(producto)} {_legible(variante)} actualizado: "
         f"{cantidad_anterior:g}{unidad_anterior} -> {nueva_cantidad:g}{unidad_final}."
     )
 
@@ -309,22 +374,27 @@ def reemplazar_ingrediente_receta(
         return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
     ingredientes = _load_ingredientes()
-    mask = _mask_ingrediente(ingredientes, producto, variante, insumo_actual, componente)
-    filas = ingredientes[mask]
-    if filas.empty:
-        return f"No encontré '{insumo_actual}' en {_legible(producto)} {_legible(variante)}."
-    if not componente and filas["componente"].nunique() > 1:
-        opciones = ", ".join(filas["componente"].unique())
-        return f"'{insumo_actual}' aparece en varios componentes de {_legible(producto)} {_legible(variante)}: {opciones}. Especifica cual (componente)."
+    filas_receta = _filas_receta(ingredientes, producto, variante, componente)
+    if filas_receta.empty:
+        return f"No encontré la receta {_legible(producto)} {_legible(variante)}."
 
-    ingredientes.loc[mask, "insumo"] = insumo_nuevo
-    ingredientes.loc[mask, "cantidad"] = cantidad
-    ingredientes.loc[mask, "unidad"] = unidad
+    candidatas = _resolver_insumo_en_filas(filas_receta, insumo_actual)
+    if candidatas.empty:
+        disponibles = ", ".join(filas_receta["insumo"].unique())
+        return f"No encontré nada parecido a '{insumo_actual}' en {_legible(producto)} {_legible(variante)}. Insumos en esa receta: {disponibles}."
+    if len(candidatas) > 1:
+        opciones = ", ".join(f"{f.insumo} ({f.componente})" for f in candidatas.itertuples())
+        return f"Hay varias coincidencias para '{insumo_actual}': {opciones}. Especifica cual (y el componente si hace falta)."
+
+    insumo_real = candidatas.iloc[0]["insumo"]
+    ingredientes.loc[candidatas.index, "insumo"] = insumo_nuevo
+    ingredientes.loc[candidatas.index, "cantidad"] = cantidad
+    ingredientes.loc[candidatas.index, "unidad"] = unidad
     ingredientes.to_csv(INGREDIENTES_PATH, index=False)
 
     return (
         f"Reemplazado en {_legible(producto)} {_legible(variante)}: "
-        f"{insumo_actual} -> {insumo_nuevo} ({cantidad:g}{unidad})."
+        f"{insumo_real} -> {insumo_nuevo} ({cantidad:g}{unidad})."
     )
 
 

@@ -86,6 +86,14 @@ Reglas importantes:
   aparece en más de un componente de la receta (ej. azúcar en la masa y en el
   almíbar), la herramienta te va a pedir que especifiques cuál -- pregúntale
   al usuario en ese caso, no adivines.
+- Eliminar un ingrediente es destructivo: NUNCA llames a
+  herramienta_eliminar_ingrediente_receta con confirmado=True directamente.
+  Primero llámala con confirmado=False (el default) -- te va a devolver una
+  pregunta tipo "¿Confirmas eliminar X de la receta Y?", muéstrasela al
+  usuario tal cual y espera su respuesta. Solo si el usuario confirma
+  (dice que sí, ok, confirmo, etc.) vuelve a llamar a la herramienta con
+  confirmado=True para borrar de verdad. Si el usuario no confirma, no
+  elimines nada.
 """
 
 
@@ -98,10 +106,15 @@ def herramienta_agregar_ingrediente_receta(producto: str, variante: str, compone
 
 
 @tool
-def herramienta_eliminar_ingrediente_receta(producto: str, variante: str, insumo: str, componente: str | None = None) -> str:
-    """Elimina un insumo de una receta. Si el insumo aparece en mas de un
-    componente, pasa `componente` para indicar cual."""
-    return t.eliminar_ingrediente_receta(producto, variante, insumo, componente)
+def herramienta_eliminar_ingrediente_receta(
+    producto: str, variante: str, insumo: str, componente: str | None = None, confirmado: bool = False,
+) -> str:
+    """Elimina un insumo de una receta. Tolera texto libre/errores de tipeo en el
+    nombre del insumo. Si aparece en mas de un componente, pasa `componente`.
+    SIEMPRE llamar primero con confirmado=False (el default) -- devuelve una
+    pregunta de confirmacion, NO borra nada todavia. Solo pasar confirmado=True
+    en una segunda llamada, despues de que el usuario responda que si."""
+    return t.eliminar_ingrediente_receta(producto, variante, insumo, componente, confirmado)
 
 
 @tool
