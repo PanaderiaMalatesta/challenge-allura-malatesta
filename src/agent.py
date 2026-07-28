@@ -74,6 +74,12 @@ Reglas importantes:
   para mostrar las variantes disponibles.
 - Responde siempre en español, de forma directa y con las cifras en pesos
   chilenos (CLP).
+- Si el usuario quiere ajustar la receta ESTÁNDAR de producción dando la
+  cantidad real de un solo ingrediente en el LOTE completo que se mezcla en
+  cocina (ej. "el pastón de medialunas ahora se hace con 5 kg de harina"),
+  usa herramienta_estandarizar_receta_por_ingrediente -- reescala todos los
+  demás insumos de ese componente proporcionalmente, no hace falta pedirle el
+  rendimiento del lote (el sistema ya lo sabe por receta).
 - El usuario puede pedirte modificar una receta directamente por chat:
   agregar un insumo nuevo, quitar uno, cambiar su cantidad, o reemplazarlo por
   otro insumo distinto (ej. "quita la sal de la Factura de Manjar", "agrega
@@ -95,6 +101,20 @@ Reglas importantes:
   confirmado=True para borrar de verdad. Si el usuario no confirma, no
   elimines nada.
 """
+
+
+@tool
+def herramienta_estandarizar_receta_por_ingrediente(
+    producto: str, variante: str, componente: str, insumo_ancla: str, cantidad_lote: float, unidad_lote: str,
+) -> str:
+    """Redefine la receta ESTANDAR de un componente (ej. la Masa de una
+    Medialuna) dando la cantidad real de UN insumo ancla en el lote completo
+    que se mezcla en cocina (ej. 'el pastón usa 4,8 kg de harina'). El sistema
+    ya sabe cuantas unidades rinde ese lote, calcula el factor de cambio y
+    reescala PROPORCIONALMENTE todos los demas insumos de ese componente
+    automaticamente -- usar esto cuando el usuario quiera ajustar la receta
+    estandar de producción en base a un ingrediente, no gramo por gramo."""
+    return t.estandarizar_receta_por_ingrediente(producto, variante, componente, insumo_ancla, cantidad_lote, unidad_lote)
 
 
 @tool
@@ -206,6 +226,7 @@ def herramienta_buscar_en_recetario(pregunta: str) -> str:
 
 
 TOOLS = [
+    herramienta_estandarizar_receta_por_ingrediente,
     herramienta_agregar_ingrediente_receta,
     herramienta_eliminar_ingrediente_receta,
     herramienta_editar_ingrediente_receta,

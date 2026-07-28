@@ -247,6 +247,74 @@ def _resolver_insumo_en_filas(filas: pd.DataFrame, texto_insumo: str) -> pd.Data
     return filas.loc[mejores_idx]
 
 
+def _convertir_unidad(cantidad: float, unidad_origen: str, unidad_destino: str) -> float:
+    """Convierte una cantidad entre unidades compatibles (g<->kg, mL<->L, o la
+    misma unidad exacta para unidad/porcion)."""
+    if unidad_origen not in _FACTOR_A_UNIDAD_INSUMO:
+        raise ValueError(f"Unidad '{unidad_origen}' no valida.")
+    if unidad_destino not in _FACTOR_A_UNIDAD_INSUMO:
+        raise ValueError(f"Unidad '{unidad_destino}' no valida.")
+    base_origen, factor_origen = _FACTOR_A_UNIDAD_INSUMO[unidad_origen]
+    base_destino, factor_destino = _FACTOR_A_UNIDAD_INSUMO[unidad_destino]
+    if base_origen != base_destino:
+        raise ValueError(f"'{unidad_origen}' y '{unidad_destino}' no son unidades compatibles.")
+    return cantidad * factor_origen / factor_destino
+
+
+def estandarizar_receta_por_ingrediente(
+    producto: str, variante: str, componente: str, insumo_ancla: str, cantidad_lote: float, unidad_lote: str,
+) -> str:
+    """Redefine la receta ESTANDAR de un componente (ej. la Masa de la Medialuna
+    Tradicional) a partir de la cantidad real que se usa de UN insumo ancla en
+    el lote completo que se mezcla en cocina (ej. "el pastón usa 4,8 kg de
+    harina"). El sistema ya sabe cuantas unidades rinde ese lote (quedo
+    guardado la primera vez que se costeo la receta), calcula el factor de
+    cambio respecto a lo que hay guardado, y reescala PROPORCIONALMENTE todos
+    los demas insumos de ese mismo componente -- no hace falta tocarlos uno
+    por uno."""
+    if unidad_lote not in _FACTOR_A_UNIDAD_INSUMO:
+        return f"Unidad '{unidad_lote}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
+
+    ingredientes = _load_ingredientes()
+    filas_componente = _filas_receta(ingredientes, producto, variante, componente)
+    if filas_componente.empty:
+        return f"No encontré el componente '{componente}' de {_legible(producto)} {_legible(variante)}."
+
+    candidatas = _resolver_insumo_en_filas(filas_componente, insumo_ancla)
+    if candidatas.empty:
+        disponibles = ", ".join(filas_componente["insumo"].unique())
+        return f"No encontré nada parecido a '{insumo_ancla}' en {_legible(producto)} {_legible(variante)} ({componente}). Insumos ahí: {disponibles}."
+    if len(candidatas) > 1:
+        opciones = ", ".join(candidatas["insumo"].unique())
+        return f"Hay varias coincidencias para '{insumo_ancla}': {opciones}. Especifica cual."
+
+    fila_ancla = candidatas.iloc[0]
+    rendimiento_lote = filas_componente["rendimiento_lote"].iloc[0] if "rendimiento_lote" in filas_componente.columns else 1
+
+    try:
+        cantidad_lote_en_unidad_ancla = _convertir_unidad(cantidad_lote, unidad_lote, fila_ancla.unidad)
+    except ValueError as e:
+        return str(e)
+
+    nueva_cantidad_por_unidad = cantidad_lote_en_unidad_ancla / rendimiento_lote
+    if fila_ancla.cantidad == 0:
+        return f"No puedo calcular el factor de cambio: {fila_ancla.insumo} está guardado en 0 actualmente."
+    factor = nueva_cantidad_por_unidad / fila_ancla.cantidad
+
+    lineas = [
+        f"Estandarizando {_legible(producto)} {_legible(variante)} ({componente}) "
+        f"con {fila_ancla.insumo} = {cantidad_lote:g}{unidad_lote} para un lote que rinde {rendimiento_lote:g}:"
+    ]
+    for fila in filas_componente.itertuples():
+        nueva_cantidad = fila.cantidad * factor
+        ingredientes.loc[fila.Index, "cantidad"] = nueva_cantidad
+        lineas.append(f"  - {fila.insumo}: {fila.cantidad:g}{fila.unidad} -> {nueva_cantidad:g}{fila.unidad}")
+
+    ingredientes.to_csv(INGREDIENTES_PATH, index=False)
+    lineas.append(f"Factor aplicado: {factor:.4f}")
+    return "\n".join(lineas)
+
+
 def _asegurar_en_catalogo(producto: str, variante: str) -> None:
     """Si el producto/variante no existe en catalogo_precios.csv, lo agrega sin
     precio de venta (queda como receta sin clasificar hasta que se le asigne
@@ -281,9 +349,16 @@ def agregar_ingrediente_receta(producto: str, variante: str, componente: str, in
             "Usa editar_ingrediente_receta si quieres cambiar la cantidad."
         )
 
+    # Si el componente ya existe, heredar su rendimiento_lote para que quede
+    # consistente con el resto de los insumos de esa misma masa/relleno/etc.
+    rendimiento_lote = 1
+    if not filas_receta.empty and "rendimiento_lote" in filas_receta.columns:
+        rendimiento_lote = filas_receta["rendimiento_lote"].iloc[0]
+
     nueva_fila = pd.DataFrame([{
         "producto": producto, "variante": variante, "componente": componente,
         "insumo": insumo, "cantidad": cantidad, "unidad": unidad,
+        "rendimiento_lote": rendimiento_lote,
     }])
     ingredientes = pd.concat([ingredientes, nueva_fila], ignore_index=True)
     ingredientes.to_csv(INGREDIENTES_PATH, index=False)
