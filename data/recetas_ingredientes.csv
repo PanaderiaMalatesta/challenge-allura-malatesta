@@ -30,10 +30,10 @@ Factura,Manjar,Masa,margarina_hoja,12.883,g,103.0
 Factura,Manjar,Relleno,manjar,40.0,g,1.0
 Medialuna,Tradicional,Masa,harina_0000,67.6056338028169,g,71.0
 Medialuna,Tradicional,Masa,leche_polvo,4.50697558721557,g,71.0
-Medialuna,Tradicional,Masa,azucar,5.886968112256059,g,71.0
+Medialuna,Tradicional,Masa,azucar,5.886901408450704,g,71.0
 Medialuna,Tradicional,Masa,glucosa,0.5633969482665302,g,71.0
 Medialuna,Tradicional,Masa,sal,1.1267938965330604,g,71.0
-Medialuna,Tradicional,Masa,mantequilla,18.689898763048372,g,71.0
+Medialuna,Tradicional,Masa,mantequilla,18.68989876304837,g,71.0
 Medialuna,Tradicional,Almibar,azucar,8.333,g,12.0
 Medialuna,DulceDeLeche,Masa,harina_0000,67.606,g,71.0
 Medialuna,DulceDeLeche,Masa,leche_polvo,4.507,g,71.0
@@ -299,4 +299,4 @@ Galleta,Florentina,Masa,miel,4.6667,g,15.0
 Galleta,Florentina,Masa,vaina_vainilla,0.0667,unidad,15.0
 Galleta,Florentina,Masa,flor_de_sal,0.0667,g,15.0
 Galleta,Florentina,Masa,almendras_laminadas,13.3333,g,15.0
-Medialuna,Tradicional,Masa,vainilla_tahiti,5.816968491420671,g,71.0
+Medialuna,Tradicional,Masa,vainilla_tahiti,5.816901408450704,g,71.0

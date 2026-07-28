@@ -6,17 +6,16 @@ que vive en tools.py / costeo_unitario.csv.
 """
 from __future__ import annotations
 
-from pathlib import Path
-
 from dotenv import load_dotenv
 from langchain_cohere import CohereEmbeddings
 from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import MarkdownTextSplitter
 
+from .paths import DATA_DIR
+
 load_dotenv()
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 RECETAS_PATH = DATA_DIR / "recetas.md"
 INDEX_DIR = DATA_DIR / "index_recetas"
 

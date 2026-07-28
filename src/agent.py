@@ -92,15 +92,21 @@ Reglas importantes:
 - El usuario puede pedirte modificar una receta directamente por chat:
   agregar un insumo nuevo, quitar uno, cambiar su cantidad, o reemplazarlo por
   otro insumo distinto (ej. "quita la sal de la Factura de Manjar", "agrega
-  50g de nueces a la Medialuna Pistacho", "cambia la mantequilla de la Masa
-  Sablée a 90 gramos", "reemplaza la margarina por mantequilla en la
-  Factura"). Usa herramienta_agregar_ingrediente_receta,
+  0,1 L de esencia de vainilla a la Masa de la Medialuna Tradicional", "cambia
+  la mantequilla de la Masa Sablée a 90 gramos", "reemplaza la margarina por
+  mantequilla en la Factura"). Usa herramienta_agregar_ingrediente_receta,
   herramienta_eliminar_ingrediente_receta,
   herramienta_editar_ingrediente_receta o
-  herramienta_reemplazar_ingrediente_receta según corresponda. Si un insumo
-  aparece en más de un componente de la receta (ej. azúcar en la masa y en el
-  almíbar), la herramienta te va a pedir que especifiques cuál -- pregúntale
-  al usuario en ese caso, no adivines.
+  herramienta_reemplazar_ingrediente_receta según corresponda.
+  IMPORTANTE: todas estas herramientas trabajan en términos del LOTE
+  ESTÁNDAR completo (igual que herramienta_receta_estandar), NUNCA por unidad
+  individual -- si el usuario dice "agrega 0,1 L de vainilla", eso es 0,1 L
+  para todo el pastón, no por medialuna. Pásale ese número tal cual a la
+  herramienta (cantidad_lote / nueva_cantidad_lote), ella ya sabe convertirlo
+  usando el rendimiento del lote. Si un insumo aparece en más de un
+  componente de la receta (ej. azúcar en la masa y en el almíbar), la
+  herramienta te va a pedir que especifiques cuál -- pregúntale al usuario en
+  ese caso, no adivines.
 - Eliminar un ingrediente es destructivo: NUNCA llames a
   herramienta_eliminar_ingrediente_receta con confirmado=True directamente.
   Primero llámala con confirmado=False (el default) -- te va a devolver una
@@ -127,11 +133,15 @@ def herramienta_estandarizar_receta_por_ingrediente(
 
 
 @tool
-def herramienta_agregar_ingrediente_receta(producto: str, variante: str, componente: str, insumo: str, cantidad: float, unidad: str) -> str:
+def herramienta_agregar_ingrediente_receta(producto: str, variante: str, componente: str, insumo: str, cantidad_lote: float, unidad: str) -> str:
     """Agrega un insumo nuevo a una receta (componente ej. 'Masa', 'Relleno',
-    'Almibar', 'Cobertura'). Si el producto/variante no existia, se crea.
-    unidad debe ser: g, mL, kg, L, unidad o porcion."""
-    return t.agregar_ingrediente_receta(producto, variante, componente, insumo, cantidad, unidad)
+    'Almibar', 'Cobertura'). `cantidad_lote` es la cantidad para el LOTE
+    ESTANDAR completo que se mezcla en cocina (ej. "0,1 L de esencia de
+    vainilla para todo el pastón"), NO por unidad individual -- la herramienta
+    ya sabe el rendimiento del lote de ese componente y convierte sola. Si el
+    producto/variante no existia, se crea. unidad debe ser: g, mL, kg, L,
+    unidad o porcion."""
+    return t.agregar_ingrediente_receta(producto, variante, componente, insumo, cantidad_lote, unidad)
 
 
 @tool
@@ -148,22 +158,26 @@ def herramienta_eliminar_ingrediente_receta(
 
 @tool
 def herramienta_editar_ingrediente_receta(
-    producto: str, variante: str, insumo: str, nueva_cantidad: float,
+    producto: str, variante: str, insumo: str, nueva_cantidad_lote: float,
     componente: str | None = None, nueva_unidad: str | None = None,
 ) -> str:
     """Cambia la cantidad (y opcionalmente la unidad) de un insumo que ya esta en
-    una receta. Si aparece en mas de un componente, pasa `componente`."""
-    return t.editar_ingrediente_receta(producto, variante, insumo, nueva_cantidad, componente, nueva_unidad)
+    una receta. `nueva_cantidad_lote` es la cantidad para el LOTE ESTANDAR
+    completo (no por unidad individual) -- se convierte sola con el
+    rendimiento del lote ya conocido. Si aparece en mas de un componente, pasa
+    `componente`."""
+    return t.editar_ingrediente_receta(producto, variante, insumo, nueva_cantidad_lote, componente, nueva_unidad)
 
 
 @tool
 def herramienta_reemplazar_ingrediente_receta(
     producto: str, variante: str, insumo_actual: str, insumo_nuevo: str,
-    cantidad: float, unidad: str, componente: str | None = None,
+    cantidad_lote: float, unidad: str, componente: str | None = None,
 ) -> str:
-    """Reemplaza un insumo de una receta por otro distinto, con nueva cantidad y
-    unidad, en el mismo componente."""
-    return t.reemplazar_ingrediente_receta(producto, variante, insumo_actual, insumo_nuevo, cantidad, unidad, componente)
+    """Reemplaza un insumo de una receta por otro distinto, en el mismo
+    componente. `cantidad_lote` es la cantidad para el LOTE ESTANDAR completo
+    (no por unidad individual)."""
+    return t.reemplazar_ingrediente_receta(producto, variante, insumo_actual, insumo_nuevo, cantidad_lote, unidad, componente)
 
 
 @tool

@@ -19,7 +19,8 @@ from pathlib import Path
 
 import pandas as pd
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+from .paths import DATA_DIR
+
 INGREDIENTES_PATH = DATA_DIR / "recetas_ingredientes.csv"
 PRECIOS_INSUMOS_PATH = DATA_DIR / "precios_insumos.csv"
 CATALOGO_PATH = DATA_DIR / "catalogo_precios.csv"
@@ -330,9 +331,14 @@ def _asegurar_en_catalogo(producto: str, variante: str) -> None:
     catalogo.to_csv(CATALOGO_PATH, index=False)
 
 
-def agregar_ingrediente_receta(producto: str, variante: str, componente: str, insumo: str, cantidad: float, unidad: str) -> str:
+def agregar_ingrediente_receta(producto: str, variante: str, componente: str, insumo: str, cantidad_lote: float, unidad: str) -> str:
     """Agrega un insumo nuevo a una receta (producto/variante/componente, ej. 'Masa',
-    'Relleno'). Si el producto/variante no existia, se crea (sin precio de venta).
+    'Relleno'). `cantidad_lote` es la cantidad para el LOTE ESTANDAR completo que
+    se mezcla en cocina (ej. "0,1 L de esencia de vainilla" para todo el pastón),
+    NO por unidad individual -- si el componente ya existe, se usa su
+    rendimiento_lote ya conocido para convertir y guardarlo correctamente por
+    unidad. Si el producto/variante/componente no existía, se crea con
+    rendimiento_lote=1 (cantidad_lote = por unidad, sin lote definido todavía).
     `unidad` debe ser g, mL, kg, L, unidad o porcion."""
     if unidad not in _FACTOR_A_UNIDAD_INSUMO:
         return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
@@ -355,16 +361,21 @@ def agregar_ingrediente_receta(producto: str, variante: str, componente: str, in
     if not filas_receta.empty and "rendimiento_lote" in filas_receta.columns:
         rendimiento_lote = filas_receta["rendimiento_lote"].iloc[0]
 
+    cantidad_por_unidad = cantidad_lote / rendimiento_lote
+
     nueva_fila = pd.DataFrame([{
         "producto": producto, "variante": variante, "componente": componente,
-        "insumo": insumo, "cantidad": cantidad, "unidad": unidad,
+        "insumo": insumo, "cantidad": cantidad_por_unidad, "unidad": unidad,
         "rendimiento_lote": rendimiento_lote,
     }])
     ingredientes = pd.concat([ingredientes, nueva_fila], ignore_index=True)
     ingredientes.to_csv(INGREDIENTES_PATH, index=False)
     _asegurar_en_catalogo(producto, variante)
 
-    return f"Agregado: {_legible(producto)} {_legible(variante)} ahora incluye {insumo} {cantidad:g}{unidad} en {componente}."
+    return (
+        f"Agregado: {_legible(producto)} {_legible(variante)} ahora incluye {insumo} "
+        f"{cantidad_lote:g}{unidad} en el lote de {componente} (rinde {rendimiento_lote:g})."
+    )
 
 
 def eliminar_ingrediente_receta(
@@ -392,9 +403,11 @@ def eliminar_ingrediente_receta(
         return f"Hay varias coincidencias para '{insumo}': {opciones}. Especifica cual (y el componente si hace falta)."
 
     fila = candidatas.iloc[0]
+    rendimiento_lote = getattr(fila, "rendimiento_lote", 1)
+    cantidad_lote = fila.cantidad * rendimiento_lote
     if not confirmado:
         return (
-            f"¿Confirmas eliminar {fila.insumo} ({fila.cantidad:g}{fila.unidad}) de "
+            f"¿Confirmas eliminar {fila.insumo} ({cantidad_lote:g}{fila.unidad} en el lote) de "
             f"{_legible(producto)} {_legible(variante)} ({fila.componente})? Responde que sí para confirmar."
         )
 
@@ -404,11 +417,14 @@ def eliminar_ingrediente_receta(
 
 
 def editar_ingrediente_receta(
-    producto: str, variante: str, insumo: str, nueva_cantidad: float,
+    producto: str, variante: str, insumo: str, nueva_cantidad_lote: float,
     componente: str | None = None, nueva_unidad: str | None = None,
 ) -> str:
     """Cambia la cantidad (y opcionalmente la unidad) de un insumo ya presente en
-    una receta. Si el insumo aparece en mas de un componente, especifica cual."""
+    una receta. `nueva_cantidad_lote` es la cantidad para el LOTE ESTANDAR
+    completo (ej. "0,1 L" para todo el pastón), NO por unidad individual -- se
+    convierte automáticamente usando el rendimiento_lote ya conocido de esa
+    receta. Si el insumo aparece en mas de un componente, especifica cual."""
     if nueva_unidad is not None and nueva_unidad not in _FACTOR_A_UNIDAD_INSUMO:
         return f"Unidad '{nueva_unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
@@ -426,25 +442,31 @@ def editar_ingrediente_receta(
         return f"Hay varias coincidencias para '{insumo}': {opciones}. Especifica cual (y el componente si hace falta)."
 
     fila = candidatas.iloc[0]
-    cantidad_anterior, unidad_anterior = fila.cantidad, fila.unidad
-    ingredientes.loc[candidatas.index, "cantidad"] = nueva_cantidad
+    rendimiento_lote = getattr(fila, "rendimiento_lote", 1)
+    cantidad_lote_anterior = fila.cantidad * rendimiento_lote
+    unidad_anterior = fila.unidad
+    nueva_cantidad_por_unidad = nueva_cantidad_lote / rendimiento_lote
+
+    ingredientes.loc[candidatas.index, "cantidad"] = nueva_cantidad_por_unidad
     if nueva_unidad is not None:
         ingredientes.loc[candidatas.index, "unidad"] = nueva_unidad
     ingredientes.to_csv(INGREDIENTES_PATH, index=False)
 
     unidad_final = nueva_unidad or unidad_anterior
     return (
-        f"{fila.insumo} en {_legible(producto)} {_legible(variante)} actualizado: "
-        f"{cantidad_anterior:g}{unidad_anterior} -> {nueva_cantidad:g}{unidad_final}."
+        f"{fila.insumo} en {_legible(producto)} {_legible(variante)} (lote) actualizado: "
+        f"{cantidad_lote_anterior:g}{unidad_anterior} -> {nueva_cantidad_lote:g}{unidad_final}."
     )
 
 
 def reemplazar_ingrediente_receta(
     producto: str, variante: str, insumo_actual: str, insumo_nuevo: str,
-    cantidad: float, unidad: str, componente: str | None = None,
+    cantidad_lote: float, unidad: str, componente: str | None = None,
 ) -> str:
     """Reemplaza un insumo de una receta por otro distinto (ej. cambiar margarina
-    por mantequilla), en el mismo componente, con una cantidad/unidad nueva."""
+    por mantequilla), en el mismo componente. `cantidad_lote` es la cantidad
+    para el LOTE ESTANDAR completo (no por unidad individual) -- se convierte
+    con el rendimiento_lote ya conocido de esa receta."""
     if unidad not in _FACTOR_A_UNIDAD_INSUMO:
         return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
@@ -461,15 +483,19 @@ def reemplazar_ingrediente_receta(
         opciones = ", ".join(f"{f.insumo} ({f.componente})" for f in candidatas.itertuples())
         return f"Hay varias coincidencias para '{insumo_actual}': {opciones}. Especifica cual (y el componente si hace falta)."
 
-    insumo_real = candidatas.iloc[0]["insumo"]
+    fila = candidatas.iloc[0]
+    rendimiento_lote = getattr(fila, "rendimiento_lote", 1)
+    insumo_real = fila.insumo
+    cantidad_por_unidad = cantidad_lote / rendimiento_lote
+
     ingredientes.loc[candidatas.index, "insumo"] = insumo_nuevo
-    ingredientes.loc[candidatas.index, "cantidad"] = cantidad
+    ingredientes.loc[candidatas.index, "cantidad"] = cantidad_por_unidad
     ingredientes.loc[candidatas.index, "unidad"] = unidad
     ingredientes.to_csv(INGREDIENTES_PATH, index=False)
 
     return (
         f"Reemplazado en {_legible(producto)} {_legible(variante)}: "
-        f"{insumo_real} -> {insumo_nuevo} ({cantidad:g}{unidad})."
+        f"{insumo_real} -> {insumo_nuevo} ({cantidad_lote:g}{unidad} en el lote)."
     )
 
 
