@@ -40,16 +40,25 @@ Tu trabajo:
 
 Reglas importantes:
 - Distingue bien qué está pidiendo el usuario:
-  - Si pide LA RECETA (ingredientes, cantidades, procedimiento, "cómo se
-    hace", "de qué está hecho") → usa herramienta_buscar_en_recetario, que
-    busca en el texto del recetario. NO uses herramienta_buscar_receta para
-    esto, esa herramienta es solo de costeo y NO devuelve ingredientes ni
-    pasos de preparación. Después de mostrar la receta, SIEMPRE pregunta
-    "¿qué cantidad necesitas hacer?" antes de terminar la respuesta. Cuando el
-    usuario te responda con la cantidad, usa herramienta_escalar_ingredientes
-    (no herramienta_escalar_receta, que da el costo) para darle la lista de
-    insumos ya escalada en unidades reales (gramos/kg/L/unidades) para esa
-    cantidad.
+  - Si pide LA RECETA de un producto/variante específico ("dame la receta de
+    X", "los ingredientes de X", "cuánta harina lleva X") SIN mencionar una
+    cantidad a fabricar → usa herramienta_receta_estandar. Esta herramienta ya
+    devuelve las cantidades REALES del lote estándar que se mezcla en cocina
+    (ej. 4,8 kg de harina), no gramos por unidad ni costos en pesos -- es la
+    respuesta completa, NO preguntes "¿qué cantidad necesitas?" después de
+    esto, esa pregunta solo aplica si el usuario dice que quiere hacer una
+    cantidad DISTINTA a la estándar (ver más abajo).
+  - Si el usuario pide la receta pero especifica una cantidad a fabricar
+    distinta a la estándar (ej. "necesito hacer 300 medialunas", "para un
+    evento de 50 facturas") → usa herramienta_escalar_ingredientes
+    directamente con esa cantidad (no preguntes nada extra, no uses
+    herramienta_receta_estandar en ese caso).
+  - Si pide el PROCEDIMIENTO/pasos de preparación ("cómo se hace", "cuál es
+    la técnica", "qué pasos sigo") → usa herramienta_buscar_en_recetario, que
+    busca el texto narrativo del recetario.
+  - NO uses herramienta_buscar_receta para preguntas de receta/ingredientes,
+    esa herramienta es solo de costeo (da el costo en pesos, food cost, etc.),
+    no ingredientes ni gramos.
   - Si pide el COSTO, PRECIO, FOOD COST o GANANCIA → usa
     herramienta_buscar_receta / herramienta_escalar_receta (costeo
     determinístico).
@@ -187,6 +196,16 @@ def herramienta_buscar_receta(producto: str) -> str:
 
 
 @tool
+def herramienta_receta_estandar(producto: str, variante: str) -> str:
+    """Muestra la receta en las cantidades del LOTE ESTANDAR real que se mezcla
+    en cocina para cada componente (ej. la Masa en su lote real de 4,8 kg de
+    harina), no en gramos por unidad ni en costos. Usar esto por defecto cuando
+    el usuario pide 'la receta' de un producto sin especificar una cantidad a
+    fabricar distinta a la estándar."""
+    return t.receta_estandar(producto, variante)
+
+
+@tool
 def herramienta_escalar_ingredientes(producto: str, variante: str, cantidad: float) -> str:
     """Devuelve la lista de insumos y cantidades REALES (gramos/kg/L/unidades) para
     fabricar `cantidad` de un producto/variante -- para saber qué pesar/comprar.
@@ -226,6 +245,7 @@ def herramienta_buscar_en_recetario(pregunta: str) -> str:
 
 
 TOOLS = [
+    herramienta_receta_estandar,
     herramienta_estandarizar_receta_por_ingrediente,
     herramienta_agregar_ingrediente_receta,
     herramienta_eliminar_ingrediente_receta,

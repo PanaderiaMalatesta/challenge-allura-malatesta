@@ -552,6 +552,38 @@ def _formatear_cantidad(total: float, unidad: str) -> str:
     return f"{total:.2f} {unidad}"
 
 
+def receta_estandar(producto: str, variante: str) -> str:
+    """Muestra la receta en las cantidades del LOTE ESTANDAR que realmente se
+    mezcla en cocina para cada componente (ej. la Masa de la Medialuna
+    Tradicional en su lote real de 4,8 kg de harina, no en gramos por unidad).
+    Usa el rendimiento_lote guardado por receta. Esta es la forma natural de
+    responder cuando el usuario pide "la receta" de un producto sin especificar
+    una cantidad distinta a fabricar."""
+    catalogo = _load_catalogo()
+    info = _info_catalogo(producto, variante)
+    if info is None:
+        return _mensaje_no_encontrado(catalogo, producto, variante)
+    producto, variante = info["producto"], info["variante"]
+
+    ingredientes = _load_ingredientes()
+    filas = ingredientes[
+        (ingredientes["producto"].apply(_normalizar) == _normalizar(producto))
+        & (ingredientes["variante"].apply(_normalizar) == _normalizar(variante))
+    ]
+    if filas.empty:
+        return f"{_legible(producto)} {_legible(variante)} no tiene un desglose de insumos registrado (es costo fijo, sin receta detallada)."
+
+    lineas = [f"Receta estándar de {_legible(producto)} {_legible(variante)}:"]
+    for componente, grupo in filas.groupby("componente", sort=False):
+        rendimiento_lote = grupo["rendimiento_lote"].iloc[0] if "rendimiento_lote" in grupo.columns else 1
+        etiqueta_rinde = f" (lote rinde {rendimiento_lote:g})" if rendimiento_lote != 1 else " (por unidad)"
+        lineas.append(f"  {componente}{etiqueta_rinde}:")
+        for fila in grupo.itertuples():
+            cantidad_lote = fila.cantidad * rendimiento_lote
+            lineas.append(f"    - {fila.insumo}: {_formatear_cantidad(cantidad_lote, fila.unidad)}")
+    return "\n".join(lineas)
+
+
 def escalar_ingredientes(producto: str, variante: str, cantidad: float) -> str:
     """Devuelve la lista de insumos y cantidades reales (gramos/kg/L/unidades) que
     hay que pesar/usar para fabricar `cantidad` de un producto/variante -- para
