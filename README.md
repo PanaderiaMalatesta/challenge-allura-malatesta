@@ -104,6 +104,31 @@ Desplegado en **Railway** (bot de Telegram, long-polling). Ver
 
 Bot en producción: **@chef_malatesta_bot** (t.me/chef_malatesta_bot).
 
+### Evidencia — conversación real en producción
+
+```
+Tú: dame una receta de masa quebrada... (interacción previa: bot mostró
+    receta de Medialuna Tradicional -- masa, almíbar, costo $408/u,
+    precio $1.690, food cost 24,1% -- y preguntó la cantidad)
+
+Bot: ¿Qué cantidad necesitas hacer?
+
+Tú: 400 medialunas
+
+Bot: Para hacer 400 medialunas tradicionales, necesitarás los siguientes
+     ingredientes:
+     - Harina 0000: 27.04 kg
+     - Leche en polvo: 1.80 kg
+     - Azúcar: 5.69 kg
+     - Glucosa: 225.36 g
+     - Sal: 450.72 g
+     - Vainilla de Tahití: 2.33 kg
+     - Mantequilla: 7.48 kg
+```
+
+Cifras verificadas contra `recetas_ingredientes.csv` (masa + almíbar por
+unidad × 400) — coinciden exactas.
+
 ## Próximos pasos (fuera del alcance de este challenge)
 
 - Completar precios de insumos pendientes (quedan ~27 insumos de la categoría
