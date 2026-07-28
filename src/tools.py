@@ -197,6 +197,137 @@ def actualizar_precio_insumo(insumo: str, nuevo_precio: float) -> str:
     return f"Precio de {nombre_real} actualizado: ${precio_anterior:.0f} -> ${nuevo_precio:.0f}."
 
 
+def _mask_ingrediente(ingredientes: pd.DataFrame, producto: str, variante: str, insumo: str, componente: str | None) -> pd.Series:
+    mask = (
+        (ingredientes["producto"].apply(_normalizar) == _normalizar(producto))
+        & (ingredientes["variante"].apply(_normalizar) == _normalizar(variante))
+        & (ingredientes["insumo"].apply(_normalizar) == _normalizar(insumo))
+    )
+    if componente:
+        mask &= ingredientes["componente"].apply(_normalizar) == _normalizar(componente)
+    return mask
+
+
+def _asegurar_en_catalogo(producto: str, variante: str) -> None:
+    """Si el producto/variante no existe en catalogo_precios.csv, lo agrega sin
+    precio de venta (queda como receta sin clasificar hasta que se le asigne
+    categoria/precio), para que quede visible en buscar_receta/listar_variantes."""
+    catalogo = _load_catalogo()
+    if _info_catalogo(producto, variante) is not None:
+        return
+    nueva_fila = pd.DataFrame([{
+        "producto": producto, "variante": variante, "categoria": "SinClasificar",
+        "precio_venta": None, "costo_fijo": None,
+    }])
+    catalogo = pd.concat([catalogo, nueva_fila], ignore_index=True)
+    catalogo.to_csv(CATALOGO_PATH, index=False)
+
+
+def agregar_ingrediente_receta(producto: str, variante: str, componente: str, insumo: str, cantidad: float, unidad: str) -> str:
+    """Agrega un insumo nuevo a una receta (producto/variante/componente, ej. 'Masa',
+    'Relleno'). Si el producto/variante no existia, se crea (sin precio de venta).
+    `unidad` debe ser g, mL, kg, L, unidad o porcion."""
+    if unidad not in _FACTOR_A_UNIDAD_INSUMO:
+        return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
+
+    ingredientes = _load_ingredientes()
+    mask = _mask_ingrediente(ingredientes, producto, variante, insumo, componente)
+    if mask.any():
+        return (
+            f"{insumo} ya existe en {_legible(producto)} {_legible(variante)} ({componente}). "
+            "Usa editar_ingrediente_receta si quieres cambiar la cantidad."
+        )
+
+    nueva_fila = pd.DataFrame([{
+        "producto": producto, "variante": variante, "componente": componente,
+        "insumo": insumo, "cantidad": cantidad, "unidad": unidad,
+    }])
+    ingredientes = pd.concat([ingredientes, nueva_fila], ignore_index=True)
+    ingredientes.to_csv(INGREDIENTES_PATH, index=False)
+    _asegurar_en_catalogo(producto, variante)
+
+    return f"Agregado: {_legible(producto)} {_legible(variante)} ahora incluye {insumo} {cantidad:g}{unidad} en {componente}."
+
+
+def eliminar_ingrediente_receta(producto: str, variante: str, insumo: str, componente: str | None = None) -> str:
+    """Elimina un insumo de una receta. Si el mismo insumo aparece en mas de un
+    componente (ej. 'azucar' en Masa y en Almibar), hay que especificar
+    `componente` para saber cual quitar."""
+    ingredientes = _load_ingredientes()
+    mask = _mask_ingrediente(ingredientes, producto, variante, insumo, componente)
+    filas = ingredientes[mask]
+    if filas.empty:
+        return f"No encontré '{insumo}' en {_legible(producto)} {_legible(variante)}."
+    if not componente and filas["componente"].nunique() > 1:
+        opciones = ", ".join(filas["componente"].unique())
+        return f"'{insumo}' aparece en varios componentes de {_legible(producto)} {_legible(variante)}: {opciones}. Especifica cual (componente)."
+
+    ingredientes = ingredientes[~mask]
+    ingredientes.to_csv(INGREDIENTES_PATH, index=False)
+    return f"Eliminado: {insumo} de {_legible(producto)} {_legible(variante)}."
+
+
+def editar_ingrediente_receta(
+    producto: str, variante: str, insumo: str, nueva_cantidad: float,
+    componente: str | None = None, nueva_unidad: str | None = None,
+) -> str:
+    """Cambia la cantidad (y opcionalmente la unidad) de un insumo ya presente en
+    una receta. Si el insumo aparece en mas de un componente, especifica cual."""
+    if nueva_unidad is not None and nueva_unidad not in _FACTOR_A_UNIDAD_INSUMO:
+        return f"Unidad '{nueva_unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
+
+    ingredientes = _load_ingredientes()
+    mask = _mask_ingrediente(ingredientes, producto, variante, insumo, componente)
+    filas = ingredientes[mask]
+    if filas.empty:
+        return f"No encontré '{insumo}' en {_legible(producto)} {_legible(variante)}."
+    if not componente and filas["componente"].nunique() > 1:
+        opciones = ", ".join(filas["componente"].unique())
+        return f"'{insumo}' aparece en varios componentes de {_legible(producto)} {_legible(variante)}: {opciones}. Especifica cual (componente)."
+
+    cantidad_anterior = filas.iloc[0]["cantidad"]
+    unidad_anterior = filas.iloc[0]["unidad"]
+    ingredientes.loc[mask, "cantidad"] = nueva_cantidad
+    if nueva_unidad is not None:
+        ingredientes.loc[mask, "unidad"] = nueva_unidad
+    ingredientes.to_csv(INGREDIENTES_PATH, index=False)
+
+    unidad_final = nueva_unidad or unidad_anterior
+    return (
+        f"{insumo} en {_legible(producto)} {_legible(variante)} actualizado: "
+        f"{cantidad_anterior:g}{unidad_anterior} -> {nueva_cantidad:g}{unidad_final}."
+    )
+
+
+def reemplazar_ingrediente_receta(
+    producto: str, variante: str, insumo_actual: str, insumo_nuevo: str,
+    cantidad: float, unidad: str, componente: str | None = None,
+) -> str:
+    """Reemplaza un insumo de una receta por otro distinto (ej. cambiar margarina
+    por mantequilla), en el mismo componente, con una cantidad/unidad nueva."""
+    if unidad not in _FACTOR_A_UNIDAD_INSUMO:
+        return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
+
+    ingredientes = _load_ingredientes()
+    mask = _mask_ingrediente(ingredientes, producto, variante, insumo_actual, componente)
+    filas = ingredientes[mask]
+    if filas.empty:
+        return f"No encontré '{insumo_actual}' en {_legible(producto)} {_legible(variante)}."
+    if not componente and filas["componente"].nunique() > 1:
+        opciones = ", ".join(filas["componente"].unique())
+        return f"'{insumo_actual}' aparece en varios componentes de {_legible(producto)} {_legible(variante)}: {opciones}. Especifica cual (componente)."
+
+    ingredientes.loc[mask, "insumo"] = insumo_nuevo
+    ingredientes.loc[mask, "cantidad"] = cantidad
+    ingredientes.loc[mask, "unidad"] = unidad
+    ingredientes.to_csv(INGREDIENTES_PATH, index=False)
+
+    return (
+        f"Reemplazado en {_legible(producto)} {_legible(variante)}: "
+        f"{insumo_actual} -> {insumo_nuevo} ({cantidad:g}{unidad})."
+    )
+
+
 def listar_variantes(termino: str) -> str:
     """Lista los nombres de producto/variante que coincidan con `termino` (busca en
     producto, variante y categoria, sin distinguir mayusculas ni espaciado, palabra

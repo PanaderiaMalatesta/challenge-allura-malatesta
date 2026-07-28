@@ -74,7 +74,54 @@ Reglas importantes:
   para mostrar las variantes disponibles.
 - Responde siempre en español, de forma directa y con las cifras en pesos
   chilenos (CLP).
+- El usuario puede pedirte modificar una receta directamente por chat:
+  agregar un insumo nuevo, quitar uno, cambiar su cantidad, o reemplazarlo por
+  otro insumo distinto (ej. "quita la sal de la Factura de Manjar", "agrega
+  50g de nueces a la Medialuna Pistacho", "cambia la mantequilla de la Masa
+  Sablée a 90 gramos", "reemplaza la margarina por mantequilla en la
+  Factura"). Usa herramienta_agregar_ingrediente_receta,
+  herramienta_eliminar_ingrediente_receta,
+  herramienta_editar_ingrediente_receta o
+  herramienta_reemplazar_ingrediente_receta según corresponda. Si un insumo
+  aparece en más de un componente de la receta (ej. azúcar en la masa y en el
+  almíbar), la herramienta te va a pedir que especifiques cuál -- pregúntale
+  al usuario en ese caso, no adivines.
 """
+
+
+@tool
+def herramienta_agregar_ingrediente_receta(producto: str, variante: str, componente: str, insumo: str, cantidad: float, unidad: str) -> str:
+    """Agrega un insumo nuevo a una receta (componente ej. 'Masa', 'Relleno',
+    'Almibar', 'Cobertura'). Si el producto/variante no existia, se crea.
+    unidad debe ser: g, mL, kg, L, unidad o porcion."""
+    return t.agregar_ingrediente_receta(producto, variante, componente, insumo, cantidad, unidad)
+
+
+@tool
+def herramienta_eliminar_ingrediente_receta(producto: str, variante: str, insumo: str, componente: str | None = None) -> str:
+    """Elimina un insumo de una receta. Si el insumo aparece en mas de un
+    componente, pasa `componente` para indicar cual."""
+    return t.eliminar_ingrediente_receta(producto, variante, insumo, componente)
+
+
+@tool
+def herramienta_editar_ingrediente_receta(
+    producto: str, variante: str, insumo: str, nueva_cantidad: float,
+    componente: str | None = None, nueva_unidad: str | None = None,
+) -> str:
+    """Cambia la cantidad (y opcionalmente la unidad) de un insumo que ya esta en
+    una receta. Si aparece en mas de un componente, pasa `componente`."""
+    return t.editar_ingrediente_receta(producto, variante, insumo, nueva_cantidad, componente, nueva_unidad)
+
+
+@tool
+def herramienta_reemplazar_ingrediente_receta(
+    producto: str, variante: str, insumo_actual: str, insumo_nuevo: str,
+    cantidad: float, unidad: str, componente: str | None = None,
+) -> str:
+    """Reemplaza un insumo de una receta por otro distinto, con nueva cantidad y
+    unidad, en el mismo componente."""
+    return t.reemplazar_ingrediente_receta(producto, variante, insumo_actual, insumo_nuevo, cantidad, unidad, componente)
 
 
 @tool
@@ -146,6 +193,10 @@ def herramienta_buscar_en_recetario(pregunta: str) -> str:
 
 
 TOOLS = [
+    herramienta_agregar_ingrediente_receta,
+    herramienta_eliminar_ingrediente_receta,
+    herramienta_editar_ingrediente_receta,
+    herramienta_reemplazar_ingrediente_receta,
     herramienta_escalar_ingredientes,
     herramienta_listar_variantes,
     herramienta_listar_precios_insumos,
