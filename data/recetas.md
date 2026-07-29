@@ -398,6 +398,27 @@ en molde semiesfera de 4 cm → congelar → desmoldar, hornear a 180°C hasta
 dorar → cortar bordes con cortador de 5 cm (opcional) → bañar la mitad con
 chocolate negro 56% templado.
 
+## Brownies (categoría nueva, recetario interno en ampliación)
+
+### Brownie de Chocolate 56% — receta adaptada a 300 g de mantequilla (rinde 2.816,8 g de mezcla, con glucosa)
+La receta original se escaló proporcionalmente aumentando la mantequilla de 80 g
+a 300 g (factor 3,75) y manteniendo la glucosa.
+Ingredientes: mantequilla derretida y tibia 300 g, chocolate negro Ecuador 56%
+picado o en gotas 581 g, azúcar flor tamizada 289 g, azúcar 300 g, glucosa
+líquida 67,5 g, huevos a temperatura ambiente 439 g, harina floja tamizada
+394 g, cacao en polvo sin azúcar 56 g, sal 6,8 g, nueces o avellanas tostadas
+picadas groseramente 383 g.
+Procedimiento: derretir el chocolate junto con la mantequilla → integrar
+azúcar flor, azúcar y glucosa → agregar los huevos → incorporar los secos
+tamizados (harina, cacao en polvo, sal) → agregar al final las nueces o
+avellanas picadas.
+Horneado en horno convector a 160°C, 32 a 38 minutos (revisar a los 30 min).
+Punto ideal de cocción: superficie craquelada, bordes firmes, centro
+ligeramente húmedo — al insertar un palillo deben salir migas húmedas, nunca
+masa líquida.
+Importante: dejar enfriar completamente y refrigerar de 8 a 12 horas antes de
+cortar, para mejores cortes y textura.
+
 ## Notas de food cost objetivo por categoría (benchmark del negocio)
 - Facturas: objetivo <20% (rango sano boutique 25-35%, facturas están debajo por ser el producto ancla)
 - Medialunas Clásicas: objetivo <30%
