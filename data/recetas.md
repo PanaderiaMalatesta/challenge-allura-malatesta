@@ -400,7 +400,7 @@ chocolate negro 56% templado.
 
 ## Brownies (categoría nueva, recetario interno en ampliación)
 
-### Brownie de Chocolate 56% — receta adaptada a 300 g de mantequilla (rinde 2.816,8 g de mezcla, con glucosa)
+### Brownie — receta adaptada a 300 g de mantequilla, chocolate negro Ecuador 56% (rinde 2.816,8 g de mezcla, con glucosa)
 La receta original se escaló proporcionalmente aumentando la mantequilla de 80 g
 a 300 g (factor 3,75) y manteniendo la glucosa.
 Ingredientes: mantequilla derretida y tibia 300 g, chocolate negro Ecuador 56%

@@ -113,11 +113,15 @@ def _load_precios_insumos() -> pd.DataFrame:
 
 
 def _load_ingredientes() -> pd.DataFrame:
-    return _read_csv_flexible(INGREDIENTES_PATH)
+    df = _read_csv_flexible(INGREDIENTES_PATH)
+    df["variante"] = df["variante"].fillna("")
+    return df
 
 
 def _load_catalogo() -> pd.DataFrame:
-    return _read_csv_flexible(CATALOGO_PATH)
+    df = _read_csv_flexible(CATALOGO_PATH)
+    df["variante"] = df["variante"].fillna("")
+    return df
 
 
 def _load_produccion() -> pd.DataFrame:
