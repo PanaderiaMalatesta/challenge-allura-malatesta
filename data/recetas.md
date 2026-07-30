@@ -419,6 +419,43 @@ masa líquida.
 Importante: dejar enfriar completamente y refrigerar de 8 a 12 horas antes de
 cortar, para mejores cortes y textura.
 
+## Croissants (categoría nueva, recetario interno en ampliación)
+
+### Croissant Plano — receta base de laminado (rinde 12 croissants grandes)
+Ingredientes de la masa: harina sin polvos de hornear (idealmente harina de
+fuerza/panadera, aunque también sirve harina común) 600 g, azúcar blanca
+60 g, sal 12 g, levadura fresca 20 g (la receta original pedía 10 g de
+levadura instantánea; se reemplazó por fresca usando el doble de cantidad),
+agua tibia 360 mL.
+Mantequilla para el laminado: mantequilla sin sal a temperatura ambiente
+250 g.
+Para barnizar: 1 huevo + 1 cucharada (15 mL) de agua a temperatura ambiente.
+
+Procedimiento:
+**Masa:** mezclar los ingredientes secos en un bowl, hacer un hoyo y verter
+los líquidos (agua tibia con la levadura fresca disuelta) → amasar 20 min a
+mano o 10 min en máquina a velocidad media-baja → dejar leudar 1 hora en
+lugar tibio → desinflar, aplanar ligeramente y refrigerar envuelta en film
+30 min.
+**Mantequilla de laminado:** envolver entre papel mantequilla formando un
+sobre tipo A4 → golpear suavemente con rodillo hasta suavizar → estirar de
+manera uniforme → refrigerar.
+**Laminado:** estirar la masa a 1,5 veces el tamaño de la mantequilla →
+colocar la mantequilla dejando 3 cm sin cubrir en la base → doblar el
+tercio superior sobre la mantequilla y luego el inferior encima (3 capas) →
+refrigerar 30-60 min si hace falta.
+**Primer pliegue (book fold):** estirar a ~60 cm → doblar ambos extremos al
+centro y luego doblar por la mitad (4 capas) → refrigerar 30 min.
+**Segundo pliegue (tri-fold):** estirar en dirección perpendicular → doblar
+en tres (9 capas totales) → refrigerar 30 min o toda la noche.
+**Formado:** estirar la masa a 30x40 cm (5-7 mm de grosor) → cortar
+triángulos de 10 cm de base × 30 cm de altura → estirar ligeramente cada
+triángulo → enrollar desde la base hacia la punta, jalando la masa durante
+el proceso → presionar la punta bajo el croissant.
+**Fermentación y horneado:** colocar en bandeja con papel mantequilla →
+dejar leudar 2 horas en lugar cálido → barnizar con la mezcla de huevo y
+agua → hornear a 200°C por 25-30 minutos hasta dorar.
+
 ## Notas de food cost objetivo por categoría (benchmark del negocio)
 - Facturas: objetivo <20% (rango sano boutique 25-35%, facturas están debajo por ser el producto ancla)
 - Medialunas Clásicas: objetivo <30%
