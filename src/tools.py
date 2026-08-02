@@ -420,6 +420,46 @@ def eliminar_ingrediente_receta(
     return f"Eliminado: {fila.insumo} de {_legible(producto)} {_legible(variante)} ({fila.componente})."
 
 
+def eliminar_producto(producto: str, variante: str, confirmado: bool = False) -> str:
+    """Elimina un producto/variante COMPLETO del catálogo (y todos los insumos
+    asociados en recetas_ingredientes.csv). Distinto de
+    eliminar_ingrediente_receta, que solo borra un insumo dentro de una
+    receta -- esta función borra la receta entera.
+
+    SIEMPRE requiere confirmación: la primera llamada (confirmado=False, el
+    default) NO elimina nada, solo devuelve una pregunta de confirmación.
+    Solo se elimina de verdad cuando se vuelve a llamar con confirmado=True
+    (después de que el usuario diga que sí)."""
+    catalogo = _load_catalogo()
+    info = _info_catalogo(producto, variante)
+    if info is None:
+        return _mensaje_no_encontrado(catalogo, producto, variante)
+    producto, variante = info["producto"], info["variante"]
+
+    ingredientes = _load_ingredientes()
+    filas_ingredientes = _filas_receta(ingredientes, producto, variante)
+
+    if not confirmado:
+        detalle = f" (incluye {len(filas_ingredientes)} insumos registrados)" if not filas_ingredientes.empty else ""
+        return (
+            f"¿Confirmas eliminar POR COMPLETO {_legible(producto)} {_legible(variante)} del catálogo{detalle}? "
+            "Esto no se puede deshacer. Responde que sí para confirmar."
+        )
+
+    mask_catalogo = (
+        (catalogo["producto"].apply(_normalizar) == _normalizar(producto))
+        & (catalogo["variante"].apply(_normalizar) == _normalizar(variante))
+    )
+    catalogo = catalogo[~mask_catalogo]
+    catalogo.to_csv(CATALOGO_PATH, index=False)
+
+    if not filas_ingredientes.empty:
+        ingredientes = ingredientes.drop(filas_ingredientes.index)
+        ingredientes.to_csv(INGREDIENTES_PATH, index=False)
+
+    return f"Eliminado: {_legible(producto)} {_legible(variante)} y sus {len(filas_ingredientes)} insumos asociados."
+
+
 def editar_ingrediente_receta(
     producto: str, variante: str, insumo: str, nueva_cantidad_lote: float,
     componente: str | None = None, nueva_unidad: str | None = None,

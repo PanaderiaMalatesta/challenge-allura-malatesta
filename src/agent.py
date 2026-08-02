@@ -115,6 +115,13 @@ Reglas importantes:
   (dice que sí, ok, confirmo, etc.) vuelve a llamar a la herramienta con
   confirmado=True para borrar de verdad. Si el usuario no confirma, no
   elimines nada.
+- Si el usuario pide eliminar una RECETA COMPLETA (el producto/variante
+  entero, no un insumo puntual -- ej. "elimina el Café 9oz", "saca esa
+  receta del catálogo"), usa herramienta_eliminar_producto, NO
+  herramienta_eliminar_ingrediente_receta. Mismo patrón de confirmación
+  obligatoria: primero confirmado=False, mostrale la pregunta de
+  confirmación al usuario tal cual, y solo pasa confirmado=True después de
+  que el usuario confirme explícitamente.
 """
 
 
@@ -178,6 +185,20 @@ def herramienta_reemplazar_ingrediente_receta(
     componente. `cantidad_lote` es la cantidad para el LOTE ESTANDAR completo
     (no por unidad individual)."""
     return t.reemplazar_ingrediente_receta(producto, variante, insumo_actual, insumo_nuevo, cantidad_lote, unidad, componente)
+
+
+@tool
+def herramienta_eliminar_producto(producto: str, variante: str, confirmado: bool = False) -> str:
+    """Elimina un producto/variante COMPLETO del catalogo (la receta entera,
+    con todos sus insumos asociados). Usar cuando el usuario pide borrar una
+    receta completa (ej. 'elimina el Cafe 9oz', 'saca esa receta del
+    catalogo'), NO para borrar solo un insumo dentro de una receta (para eso
+    usa herramienta_eliminar_ingrediente_receta).
+    SIEMPRE llamar primero con confirmado=False (el default) -- devuelve una
+    pregunta de confirmacion, NO borra nada todavia. Solo pasar
+    confirmado=True en una segunda llamada, despues de que el usuario
+    responda que si."""
+    return t.eliminar_producto(producto, variante, confirmado)
 
 
 @tool
@@ -269,6 +290,7 @@ TOOLS = [
     herramienta_eliminar_ingrediente_receta,
     herramienta_editar_ingrediente_receta,
     herramienta_reemplazar_ingrediente_receta,
+    herramienta_eliminar_producto,
     herramienta_escalar_ingredientes,
     herramienta_listar_variantes,
     herramienta_listar_precios_insumos,
