@@ -503,14 +503,23 @@ def reemplazar_ingrediente_receta(
     )
 
 
+_TERMINOS_SIN_FILTRO = {"todo", "todos", "toda", "todas", ""}
+
+
 def listar_variantes(termino: str) -> str:
     """Lista los nombres de producto/variante que coincidan con `termino` (busca en
     producto, variante y categoria, sin distinguir mayusculas ni espaciado, palabra
     por palabra). Uso pensado para cuando el usuario pide algo de forma generica
     (ej. "una receta de masa quebrada" o "masa sablee") y hay que preguntarle cual
     variante especifica quiere, en vez de mostrar todo el detalle de costeo de
-    una vez."""
+    una vez. Si `termino` es "todo"/"todos"/vacio (el usuario pidio TODAS las
+    recetas sin filtrar por categoria), devuelve el catalogo completo sin filtrar."""
     catalogo = _load_catalogo()
+    if _normalizar(termino) in _TERMINOS_SIN_FILTRO:
+        return "\n".join(
+            f"{i}. {_legible(fila.producto)} {_legible(fila.variante)}"
+            for i, fila in enumerate(catalogo.itertuples(), start=1)
+        )
     filas = _buscar_filas(catalogo, termino)
     if not filas.empty:
         return "\n".join(

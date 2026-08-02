@@ -199,7 +199,11 @@ def herramienta_listar_variantes(termino: str) -> str:
     """Lista los nombres de producto/variante que coincidan con un termino de
     busqueda (categoria o producto), sin el detalle de costeo. Usar cuando el
     usuario pide algo de forma generica por categoria (ej. 'una receta de masa
-    quebrada') y hay que preguntarle cual variante especifica quiere."""
+    quebrada') y hay que preguntarle cual variante especifica quiere. Si el
+    usuario pide TODAS las recetas sin filtrar por categoria (ej. 'dame todas
+    las recetas', 'que recetas tienes', 'lista completa'), pasa termino='todo'
+    -- devuelve el catalogo completo sin filtrar, no existe una categoria
+    literal llamada 'todo'."""
     return t.listar_variantes(termino)
 
 
