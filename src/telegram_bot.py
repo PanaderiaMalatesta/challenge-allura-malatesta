@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
@@ -47,6 +48,35 @@ def _get_graph():
     return _graph
 
 
+# Confiar en que el LLM siempre infiera correctamente que un mensaje de una
+# sola palabra ("1") se refiere a una posicion de la ultima lista numerada
+# es fragil (se observo en produccion: a veces no llama a ninguna
+# herramienta y responde que "hubo un problema", o pasa el nombre completo
+# mal separado en producto/variante). En vez de pedirle al LLM que recuerde
+# la lista, Python guarda la ULTIMA lista numerada que el bot mostro (por
+# chat) y resuelve el numero al nombre real ANTES de mandarle el mensaje al
+# agente -- asi el LLM nunca tiene que "adivinar" a que se refiere el numero.
+_chat_ultima_lista: dict[int, dict[int, str]] = {}
+
+_PATRON_NUMERO_SUELTO = re.compile(r"^\s*(?:la|el|opci[oó]n|n[uú]mero)?\s*(\d+)\s*\.?\s*$", re.IGNORECASE)
+_PATRON_ITEM_LISTA = re.compile(r"^\s*(\d+)\.\s+(.+?)\s*$", re.MULTILINE)
+
+
+def _extraer_lista_numerada(texto: str) -> dict[int, str]:
+    return {int(n): nombre.strip() for n, nombre in _PATRON_ITEM_LISTA.findall(texto)}
+
+
+def _expandir_respuesta_numerica(texto: str, ultima_lista: dict[int, str]) -> str:
+    match = _PATRON_NUMERO_SUELTO.match(texto)
+    if not match:
+        return texto
+    numero = int(match.group(1))
+    nombre = ultima_lista.get(numero)
+    if nombre:
+        return f'Quiero información sobre "{nombre}" (era la opción {numero} de la lista que me mostraste).'
+    return f"Quiero la opción número {numero} de la última lista numerada que me mostraste."
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Agente interno Malatesta. Pregúntame por recetas, costos de "
@@ -56,7 +86,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def responder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
-    pregunta = update.message.text
+    ultima_lista = _chat_ultima_lista.get(chat_id, {})
+    pregunta = _expandir_respuesta_numerica(update.message.text, ultima_lista)
 
     graph = _get_graph()
     messages = _chat_messages.setdefault(chat_id, [])
@@ -65,6 +96,10 @@ async def responder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     resultado = graph.invoke({"messages": messages})
     _chat_messages[chat_id] = _recortar_historial(resultado["messages"])
     respuesta = resultado["messages"][-1].content
+
+    nueva_lista = _extraer_lista_numerada(respuesta)
+    if nueva_lista:
+        _chat_ultima_lista[chat_id] = nueva_lista
 
     await update.message.reply_text(respuesta)
 

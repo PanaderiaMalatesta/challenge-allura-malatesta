@@ -161,11 +161,39 @@ def _info_catalogo(producto: str, variante: str) -> pd.Series | None:
     if not fila.empty:
         return fila.iloc[0]
 
-    # Coincidencia exacta fallo (ej. el LLM no separo bien producto/variante,
-    # como pasar "Masa Quebrada Sablee" completo en el campo producto). Probar
-    # de nuevo buscando todas las palabras de ambos campos en conjunto.
+    # Coincidencia exacta por clave fallo (ej. el LLM no separo bien
+    # producto/variante, como pasar "Masa Quebrada Sablee" completo en el
+    # campo producto). Antes de caer a la busqueda por palabras (que es
+    # ambigua cuando una variante es substring de otra, ej. "Sablee" vs
+    # "SableeCacao" -- "sablee" normalizado es substring literal de
+    # "sableecacao"), probar una coincidencia EXACTA contra el nombre
+    # completo legible reconstruido (producto+variante), que no sufre ese
+    # falso positivo porque compara el string completo, no palabra por
+    # palabra.
+    texto_combinado = _normalizar(f"{producto} {variante}")
+    for fila_c in catalogo.itertuples():
+        nombre_completo = _normalizar(f"{_legible(fila_c.producto)} {_legible(fila_c.variante)}")
+        if nombre_completo == texto_combinado:
+            return catalogo.loc[fila_c.Index]
+
+    # Tampoco hubo match exacto por nombre completo. Probar de nuevo
+    # buscando todas las palabras de ambos campos en conjunto.
     filas = _buscar_filas(catalogo, f"{producto} {variante}")
     return filas.iloc[0] if len(filas) == 1 else None
+
+
+def _resolver_producto_variante(producto: str, variante: str) -> tuple[str, str]:
+    """Devuelve el (producto, variante) CANONICOS del catalogo si logra
+    resolverlos (via _info_catalogo, que tolera texto mal separado como
+    "Masa Quebrada Sablee" completo en `producto`), o los valores originales
+    sin tocar si no existe todavia (ej. al crear un producto nuevo con
+    agregar_ingrediente_receta). Usar esto ANTES de tocar
+    recetas_ingredientes.csv directamente en las funciones de editar receta,
+    para no operar sobre un producto/variante mal separado por el LLM."""
+    info = _info_catalogo(producto, variante)
+    if info is None:
+        return producto, variante
+    return info["producto"], info["variante"]
 
 
 def costo_unitario_producto(producto: str, variante: str) -> float:
@@ -280,6 +308,7 @@ def estandarizar_receta_por_ingrediente(
     if unidad_lote not in _FACTOR_A_UNIDAD_INSUMO:
         return f"Unidad '{unidad_lote}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
+    producto, variante = _resolver_producto_variante(producto, variante)
     ingredientes = _load_ingredientes()
     filas_componente = _filas_receta(ingredientes, producto, variante, componente)
     if filas_componente.empty:
@@ -347,6 +376,7 @@ def agregar_ingrediente_receta(producto: str, variante: str, componente: str, in
     if unidad not in _FACTOR_A_UNIDAD_INSUMO:
         return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
+    producto, variante = _resolver_producto_variante(producto, variante)
     ingredientes = _load_ingredientes()
     filas_receta = _filas_receta(ingredientes, producto, variante, componente)
     # Solo bloquear duplicados EXACTOS (sin el fallback difuso) -- lo difuso es
@@ -393,6 +423,7 @@ def eliminar_ingrediente_receta(
     default) NO elimina nada, solo devuelve una pregunta de confirmacion con el
     insumo exacto que se borraria. Solo se elimina de verdad cuando se vuelve a
     llamar con confirmado=True (despues de que el usuario diga que si)."""
+    producto, variante = _resolver_producto_variante(producto, variante)
     ingredientes = _load_ingredientes()
     filas_receta = _filas_receta(ingredientes, producto, variante, componente)
     if filas_receta.empty:
@@ -472,6 +503,7 @@ def editar_ingrediente_receta(
     if nueva_unidad is not None and nueva_unidad not in _FACTOR_A_UNIDAD_INSUMO:
         return f"Unidad '{nueva_unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
+    producto, variante = _resolver_producto_variante(producto, variante)
     ingredientes = _load_ingredientes()
     filas_receta = _filas_receta(ingredientes, producto, variante, componente)
     if filas_receta.empty:
@@ -514,6 +546,7 @@ def reemplazar_ingrediente_receta(
     if unidad not in _FACTOR_A_UNIDAD_INSUMO:
         return f"Unidad '{unidad}' no valida. Usa una de: {', '.join(_FACTOR_A_UNIDAD_INSUMO)}."
 
+    producto, variante = _resolver_producto_variante(producto, variante)
     ingredientes = _load_ingredientes()
     filas_receta = _filas_receta(ingredientes, producto, variante, componente)
     if filas_receta.empty:
