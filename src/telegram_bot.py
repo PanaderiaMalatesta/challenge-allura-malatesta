@@ -9,6 +9,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -21,6 +22,22 @@ logging.basicConfig(level=logging.INFO)
 # conversacion de Telegram tenga su propio contexto.
 _graph = None
 _chat_messages: dict[int, list] = {}
+
+# Sin limite, el historial de una conversacion larga crece para siempre y
+# termina rompiendo al modelo (respuestas truncadas/corruptas, el agente
+# "se pierde" y empieza a inventar numeros en vez de usar las herramientas).
+# Se recorta por TURNOS completos (desde un mensaje humano en adelante) para
+# nunca cortar a mitad de un tool_call/tool_result, lo que rompería el turno
+# siguiente.
+MAX_TURNOS_HISTORIAL = 15
+
+
+def _recortar_historial(messages: list) -> list:
+    indices_humanos = [i for i, m in enumerate(messages) if isinstance(m, HumanMessage)]
+    if len(indices_humanos) <= MAX_TURNOS_HISTORIAL:
+        return messages
+    corte = indices_humanos[-MAX_TURNOS_HISTORIAL]
+    return messages[corte:]
 
 
 def _get_graph():
@@ -46,7 +63,7 @@ async def responder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     messages.append(("human", pregunta))
 
     resultado = graph.invoke({"messages": messages})
-    _chat_messages[chat_id] = resultado["messages"]
+    _chat_messages[chat_id] = _recortar_historial(resultado["messages"])
     respuesta = resultado["messages"][-1].content
 
     await update.message.reply_text(respuesta)
