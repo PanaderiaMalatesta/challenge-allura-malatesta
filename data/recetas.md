@@ -456,6 +456,38 @@ el proceso → presionar la punta bajo el croissant.
 dejar leudar 2 horas en lugar cálido → barnizar con la mezcla de huevo y
 agua → hornear a 200°C por 25-30 minutos hasta dorar.
 
+## Tortas (categoría nueva, recetario interno en ampliación)
+
+### Carrot Cake — 1 torta entera (porciones aún sin definir, pendiente de prueba)
+Ingredientes del bizcocho: zanahoria 175 g, aceite de maravilla 100 mL
+(reemplaza el aceite de coco original), esencia de vainilla al gusto (se usa
+5 mL como referencia para el costeo, ajustar si se define otra cantidad),
+huevos 4 unidades, azúcar (flor de coco o azúcar de caña) 150 g, harina de
+repostería 150 g, impulsor/polvo de hornear 10 g, canela 3 g, nuez moscada
+1,5 g, clavo de olor 0,5 g.
+Ingredientes del frosting: nata para montar 500 mL, azúcar glas con
+vainilla 80 g (40 g + 40 g), queso crema o mascarpone 175 g, chocolate
+blanco 100 g.
+
+Procedimiento:
+**Base de zanahoria:** triturar la zanahoria en dados junto con el aceite y
+la vainilla hasta obtener un puré fino.
+**Huevos y azúcar:** batir los huevos con el azúcar hasta conseguir una
+mezcla aireada.
+**Integrar la zanahoria:** añadir el puré a la mezcla de huevos e integrar
+mezclando suavemente.
+**Secos:** tamizar la harina con el impulsor y las especias. Añadir en dos
+veces, mezclando con movimientos suaves y envolventes.
+**Horneado:** verter la masa en un molde engrasado y hornear a 180°C
+durante 25-30 minutos. Dejar enfriar completamente.
+
+**Frosting:** semi montar la nata con 40 g de azúcar glas → mezclar el
+queso crema con los otros 40 g de azúcar y el chocolate blanco fundido →
+incorporar esta mezcla a la nata y terminar de montar suavemente.
+
+**Montaje:** abrir el bizcocho, rellenar con el frosting, cerrar y decorar
+al gusto.
+
 ## Notas de food cost objetivo por categoría (benchmark del negocio)
 - Facturas: objetivo <20% (rango sano boutique 25-35%, facturas están debajo por ser el producto ancla)
 - Medialunas Clásicas: objetivo <30%

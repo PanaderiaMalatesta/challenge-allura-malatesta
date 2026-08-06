@@ -36,7 +36,7 @@ harina_almendras,14790,kg
 queso_parmesano,0,kg
 azucar_morena,0,kg
 bicarbonato,0,kg
-polvos_hornear,0,kg
+polvos_hornear,3000,kg
 chocolate_negro_70,0,kg
 chocolate_negro_56,8000,kg
 pasta_avellanas,0,kg
@@ -57,8 +57,12 @@ sesamo_negro,0,kg
 nibs_cacao,0,kg
 zeste_naranja,0,kg
 manteca_vegetal,0,kg
-crema_leche_35,0,kg
+crema_leche_35,4000,kg
 miel,0,kg
 vaina_vainilla,0,unidad
 flor_de_sal,0,kg
 levadura_fresca,5000,kg
+zanahoria,1500,kg
+aceite_maravilla,2000,L
+nuez_moscada,0,kg
+clavo_olor,0,kg
